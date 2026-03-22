@@ -20,8 +20,8 @@
       "require": "./dist/playwright/index.js",
       "types": "./dist/playwright/index.d.ts"
     },
-    "./tsconfig/base": "./src/tsconfig/base.json",
-    "./tsconfig/strict": "./src/tsconfig/strict.json",
+    "./tsconfig/base": "./playwright-rules/src/tsconfig/base.json",
+    "./tsconfig/strict": "./playwright-rules/src/tsconfig/strict.json",
     "./base": {
       "import": "./dist/base/index.js",
       "require": "./dist/base/index.js",
@@ -30,16 +30,17 @@
   },
   "files": [
     "dist",
-    "src/tsconfig",
+    "playwright-rules/src/tsconfig",
     "README.md"
   ],
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint src --ext .ts",
+    "build": "tsc --project playwright-rules/tsconfig.json",
+    "build:watch": "tsc --project playwright-rules/tsconfig.json --watch",
+    "test": "jest --config playwright-rules/jest.config.js",
+    "test:watch": "jest --config playwright-rules/jest.config.js --watch",
+    "test:coverage": "jest --config playwright-rules/jest.config.js --coverage",
+    "lint": "eslint playwright-rules/src --ext .ts",
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
