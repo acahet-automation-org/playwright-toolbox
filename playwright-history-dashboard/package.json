@@ -11,13 +11,13 @@
     "testing",
     "typescript"
   ],
-  "homepage": "https://github.com/acahet-automation-org/playwright-history-dashboard#readme",
+  "homepage": "https://github.com/acahet-automation-org/playwright-toolbox#readme",
   "bugs": {
-    "url": "https://github.com/acahet-automation-org/playwright-history-dashboard/issues"
+    "url": "https://github.com/acahet-automation-org/playwright-toolbox/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/acahet-automation-org/playwright-history-dashboard.git",
+    "url": "git+https://github.com/acahet-automation-org/playwright-toolbox.git",
     "directory": "package/playwright-history-dashboard"
   },
   "license": "MIT",
