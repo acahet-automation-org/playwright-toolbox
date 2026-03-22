@@ -34,7 +34,6 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
     "build": "tsc --project playwright-rules/tsconfig.json",
     "build:watch": "tsc --project playwright-rules/tsconfig.json --watch",
     "test": "jest --config playwright-rules/jest.config.js",
