@@ -1,5 +1,11 @@
 # @acahet/playwright-history-dashboard
 
+## 3.0.0
+
+### Major Changes
+
+- fix: Playwright reporter now loads correctly from the package root.- Added root "." export in package.json to allow @acahet/playwright-history-dashboard to be imported directly.- Maintains subpath import (/reporter) and CLI functionality (pw-history-init).- TypeScript types are correctly resolved.- Ensures compatibility with Playwright and Node ESM resolution.
+
 ## 2.0.0
 
 ### Major Changes
