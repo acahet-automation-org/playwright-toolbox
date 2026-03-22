@@ -1,119 +1,90 @@
-# Playwright Toolbox Packages
+# Playwright Toolbox Monorepo
 
-This repository root contains two independent npm packages:
+This repository is an npm workspaces monorepo with three independent packages:
 
-1. `@acahet/pw-standard` (root package)
-2. `@acahet/playwright-history-dashboard` (subpackage in `playwright-history-dashboard/`)
+1. `@acahet/pw-standard`
+2. `@acahet/playwright-config`
+3. `@acahet/playwright-history-dashboard`
 
-## 1) @acahet/pw-standard
+## Workspace layout
 
-Shared Playwright standards package with:
+-   `packages/pw-standard`
+-   `packages/playwright-config`
+-   `packages/playwright-history-dashboard`
 
-- custom ESLint plugin/rules for Playwright tests
-- base classes placeholder exports
-- Playwright config placeholder exports
-- reusable tsconfig presets
+## Package usage
 
-Source layout:
+### 1) @acahet/pw-standard
 
-- `playwright-rules/src`
-- tests: `playwright-rules/tests`
-- build config: `playwright-rules/tsconfig.json`
-- test config: `playwright-rules/jest.config.js`
-
-### Install
+Use for Playwright ESLint rules, base abstractions, and tsconfig presets.
 
 ```bash
 npm i -D @acahet/pw-standard
 ```
 
-### Usage examples
+### 2) @acahet/playwright-config
 
-#### ESLint plugin
+Use for extracted Playwright config presets.
 
-```ts
-import plugin from '@acahet/pw-standard/eslint';
-
-export default [
-	{
-		plugins: {
-			'playwright-standards': plugin,
-		},
-		rules: {
-			'playwright-standards/no-wait-for-timeout': 'error',
-			'playwright-standards/no-brittle-selectors': 'error',
-		},
-	},
-];
+```bash
+npm i -D @acahet/playwright-config
 ```
 
-#### TSConfig presets
+### 3) @acahet/playwright-history-dashboard
 
-```json
-{
-	"extends": "@acahet/pw-standard/tsconfig/base"
-}
-```
-
-## 2) @acahet/playwright-history-dashboard
-
-Self-hosted Playwright history reporter + static HTML dashboard.
-
-Path in this repo:
-
-- `playwright-history-dashboard/`
-
-### Install
+Use for local run history tracking and static dashboard visualization.
 
 ```bash
 npm i -D @acahet/playwright-history-dashboard
 ```
 
-### Usage examples
+See package-specific docs:
 
-#### Add reporter
-
-```ts
-reporter: [
-	['html'],
-	[
-		'@acahet/playwright-history-dashboard/reporter',
-		{ historyDir: 'tests/report/test-history' },
-	],
-];
-```
-
-#### Initialize dashboard page
-
-```bash
-npx pw-history-init
-```
-
-For full dashboard setup details, see:
-
-- `playwright-history-dashboard/README.md`
+-   `packages/pw-standard/README.md`
+-   `packages/playwright-config/README.md`
+-   `packages/playwright-history-dashboard/README.md`
 
 ## Local development
 
-From repository root (`package/`):
+Run from monorepo root:
 
 ```bash
+npm install
 npm run build
 npm test
+npm run lint
 ```
 
-From dashboard package:
+## Independent versioning and release
+
+Changesets is configured for independent package versioning.
 
 ```bash
-cd playwright-history-dashboard
-npm run build
+npm run changeset
+npm run version-packages
+npm run release
 ```
 
-## Publishing
+## Migration notes
 
-- root package publishes `@acahet/pw-standard`
-- subpackage publishes `@acahet/playwright-history-dashboard`
+### Import migration
 
-See release steps in:
+-   Previous: `@acahet/pw-standard/playwright`
+-   New preferred: `@acahet/playwright-config`
+-   Compatibility: `@acahet/pw-standard/playwright` is still re-exported for transition safety.
 
-- `playwright-history-dashboard/RELEASING.md`
+### Folder migration
+
+-   Previous rules source: `playwright-rules/src`
+-   New rules source: `packages/pw-standard/src`
+
+-   Previous rules tests: `playwright-rules/tests`
+-   New rules tests: `packages/pw-standard/tests`
+
+-   Previous dashboard folder: `playwright-history-dashboard/`
+-   New dashboard folder: `packages/playwright-history-dashboard/`
+
+### Release migration
+
+-   Previous root package publish model: one publishable root package plus one nested package.
+-   New model: three independent workspace packages with Changesets-managed versioning.
