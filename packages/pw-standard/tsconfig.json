@@ -6,7 +6,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
-		"outDir": "../dist",
+		"outDir": "./dist",
 		"rootDir": "./src",
 		"strict": true,
 		"esModuleInterop": true,
@@ -20,5 +20,5 @@
 		}
 	},
 	"include": ["src/**/*"],
-	"exclude": ["../node_modules", "../dist", "tests"]
+	"exclude": ["node_modules", "dist", "tests"]
 }

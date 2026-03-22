@@ -1,5 +1,5 @@
 node_modules/
 dist/
 *.tgz
-!playwright-history-dashboard/*.tgz
+!packages/playwright-history-dashboard/*.tgz
 .DS_Store

@@ -1,78 +1,24 @@
 {
-  "name": "@acahet/pw-standard",
+  "name": "playwright-toolbox",
+  "private": true,
   "version": "1.0.0",
-  "description": "Shared Playwright + TypeScript standards: ESLint rules, configs, base classes and fixtures",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./eslint": {
-      "import": "./dist/eslint/index.js",
-      "require": "./dist/eslint/index.js",
-      "types": "./dist/eslint/index.d.ts"
-    },
-    "./playwright": {
-      "import": "./dist/playwright/index.js",
-      "require": "./dist/playwright/index.js",
-      "types": "./dist/playwright/index.d.ts"
-    },
-    "./tsconfig/base": "./playwright-rules/src/tsconfig/base.json",
-    "./tsconfig/strict": "./playwright-rules/src/tsconfig/strict.json",
-    "./base": {
-      "import": "./dist/base/index.js",
-      "require": "./dist/base/index.js",
-      "types": "./dist/base/index.d.ts"
-    }
-  },
-  "files": [
-    "dist",
-    "playwright-rules/src/tsconfig",
-    "README.md"
+  "description": "Workspace monorepo for Playwright packages",
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "build": "tsc --project playwright-rules/tsconfig.json",
-    "build:watch": "tsc --project playwright-rules/tsconfig.json --watch",
-    "test": "jest --config playwright-rules/jest.config.js",
-    "test:watch": "jest --config playwright-rules/jest.config.js --watch",
-    "test:coverage": "jest --config playwright-rules/jest.config.js --coverage",
-    "lint": "eslint playwright-rules/src --ext .ts",
-    "prepublishOnly": "npm run build && npm test"
-  },
-  "keywords": [
-    "eslint",
-    "eslint-plugin",
-    "playwright",
-    "typescript",
-    "testing",
-    "e2e",
-    "standards"
-  ],
-  "author": "",
-  "license": "MIT",
-  "peerDependencies": {
-    "eslint": ">=8.0.0",
-    "@playwright/test": ">=1.40.0"
-  },
-  "peerDependenciesMeta": {
-    "@playwright/test": {
-      "optional": true
-    }
+    "build": "npm run --workspaces --if-present build",
+    "build:watch": "npm run --workspaces --if-present build:watch",
+    "test": "npm run --workspaces --if-present test",
+    "test:watch": "npm run --workspaces --if-present test:watch",
+    "test:coverage": "npm run --workspaces --if-present test:coverage",
+    "lint": "npm run --workspaces --if-present lint",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
   },
   "devDependencies": {
-    "@playwright/test": "^1.42.0",
-    "@types/eslint": "^8.56.0",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.11.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "eslint": "^8.56.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "@changesets/cli": "^2.27.8"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -23,7 +23,7 @@ Before starting, make sure you have:
 
 Package location in this workspace:
 
-- `package/playwright-history-dashboard`
+- `package/packages/playwright-history-dashboard`
 
 ---
 
@@ -32,7 +32,7 @@ Package location in this workspace:
 Run all commands from:
 
 ```bash
-cd /Users/andersoncahet/Documents/studies/package/playwright-history-dashboard
+cd /Users/andersoncahet/Documents/studies/package/packages/playwright-history-dashboard
 ```
 
 ### Step A: Update version
@@ -64,7 +64,7 @@ Install tarball in `pw_ui_api`:
 
 ```bash
 cd /Users/andersoncahet/Documents/studies/pw_ui_api
-npm i -D ../package/playwright-history-dashboard/acahet-playwright-history-dashboard-0.1.1.tgz
+npm i -D ../package/packages/playwright-history-dashboard/acahet-playwright-history-dashboard-0.1.1.tgz
 ```
 
 Update reporter in `playwright.config.ts` to use package reporter export:
@@ -105,7 +105,7 @@ Validation checklist:
 After local validation:
 
 ```bash
-cd /Users/andersoncahet/Documents/studies/package/playwright-history-dashboard
+cd /Users/andersoncahet/Documents/studies/package/packages/playwright-history-dashboard
 npm publish --access public
 ```
 
@@ -122,7 +122,7 @@ npm view @acahet/playwright-history-dashboard version
 From package repository folder:
 
 ```bash
-cd /Users/andersoncahet/Documents/studies/package/playwright-history-dashboard
+cd /Users/andersoncahet/Documents/studies/package/packages/playwright-history-dashboard
 git status
 git add .
 git commit -m "chore: release v0.1.1"
@@ -243,7 +243,7 @@ npm run build && npm pack
 In consumer folder:
 
 ```bash
-npm i -D ../package/playwright-history-dashboard/acahet-playwright-history-dashboard-0.1.1.tgz && npx pw-history-init && npx playwright test --project ui-tests
+npm i -D ../package/packages/playwright-history-dashboard/acahet-playwright-history-dashboard-0.1.1.tgz && npx pw-history-init && npx playwright test --project ui-tests
 ```
 
 If these pass, you are ready to publish.
