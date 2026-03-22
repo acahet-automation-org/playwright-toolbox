@@ -11,6 +11,7 @@
     "testing",
     "typescript"
   ],
+  
   "homepage": "https://github.com/acahet-automation-org/playwright-toolbox#readme",
   "bugs": {
     "url": "https://github.com/acahet-automation-org/playwright-toolbox/issues"
@@ -22,25 +23,38 @@
   },
   "license": "MIT",
   "author": "acahet",
+
   "type": "module",
+
+  "main": "./dist/src/reporter.js",
+  "types": "./dist/src/reporter.d.ts",
+
   "exports": {
+    ".": {
+      "import": "./dist/src/reporter.js",
+      "types": "./dist/src/reporter.d.ts"
+    },
     "./reporter": {
       "import": "./dist/src/reporter.js",
       "types": "./dist/src/reporter.d.ts"
     }
   },
+
   "bin": {
     "pw-history-init": "./dist/scripts/init.js"
   },
+
   "files": [
     "dist/",
     "dashboard/"
   ],
+
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "build:watch": "tsc --project tsconfig.json --watch",
     "prepublishOnly": "npm run build"
   },
+
   "peerDependencies": {
     "@playwright/test": ">=1.40.0"
   },
@@ -49,6 +63,7 @@
       "optional": false
     }
   },
+
   "devDependencies": {
     "@playwright/test": "^1.50.0",
     "typescript": "^5.4.0"
