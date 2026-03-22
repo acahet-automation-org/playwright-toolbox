@@ -1,6 +1,6 @@
 {
   "name": "playwright-toolbox",
-  "private": true,
+  "private": false,
   "version": "1.0.0",
   "description": "Workspace monorepo for Playwright packages",
   "workspaces": [
