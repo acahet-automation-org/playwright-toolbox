@@ -1,5 +1,11 @@
 # @acahet/playwright-config
 
+## 1.2.0
+
+### Minor Changes
+
+- 51cd994: feat: publish history dashboard to npm, extract playwright-config as standalone package, add missing .eslintrc.js to pw-standard
+
 ## 1.1.0
 
 ### Minor Changes
