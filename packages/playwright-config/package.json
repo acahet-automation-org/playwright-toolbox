@@ -1,6 +1,6 @@
 {
   "name": "@acahet/playwright-config",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared Playwright config presets",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

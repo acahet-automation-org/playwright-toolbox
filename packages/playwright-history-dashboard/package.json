@@ -1,6 +1,6 @@
 {
   "name": "@acahet/playwright-history-dashboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Self-hosted Playwright test history dashboard — custom reporter + single-file HTML dashboard. No SaaS, no subscriptions.",
   "keywords": [
     "playwright",

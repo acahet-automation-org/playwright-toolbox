@@ -1,6 +1,6 @@
 {
   "name": "@acahet/pw-standard",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Shared Playwright + TypeScript standards: ESLint rules, configs, base classes and fixtures",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -61,7 +61,7 @@
   "peerDependencies": {
     "eslint": ">=8.0.0",
     "@playwright/test": ">=1.40.0",
-    "@acahet/playwright-config": ">=1.0.0"
+    "@acahet/playwright-config": ">=1.1.0"
   },
   "peerDependenciesMeta": {
     "@playwright/test": {
