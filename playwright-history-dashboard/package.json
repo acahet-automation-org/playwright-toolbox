@@ -1,0 +1,56 @@
+{
+  "name": "@acahet/playwright-history-dashboard",
+  "version": "1.0.0",
+  "description": "Self-hosted Playwright test history dashboard — custom reporter + single-file HTML dashboard. No SaaS, no subscriptions.",
+  "keywords": [
+    "playwright",
+    "playwright-reporter",
+    "test-history",
+    "test-automation",
+    "dashboard",
+    "testing",
+    "typescript"
+  ],
+  "homepage": "https://github.com/acahet-automation-org/playwright-history-dashboard#readme",
+  "bugs": {
+    "url": "https://github.com/acahet-automation-org/playwright-history-dashboard/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acahet-automation-org/playwright-history-dashboard.git",
+    "directory": "package/playwright-history-dashboard"
+  },
+  "license": "MIT",
+  "author": "acahet",
+  "type": "module",
+  "exports": {
+    "./reporter": {
+      "import": "./dist/src/reporter.js",
+      "types": "./dist/src/reporter.d.ts"
+    }
+  },
+  "bin": {
+    "pw-history-init": "./dist/scripts/init.js"
+  },
+  "files": [
+    "dist/",
+    "dashboard/"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "build:watch": "tsc --project tsconfig.json --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "typescript": "^5.4.0"
+  }
+}

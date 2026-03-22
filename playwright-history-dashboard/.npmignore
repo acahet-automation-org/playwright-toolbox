@@ -1,0 +1,18 @@
+# source
+src/
+scripts/
+
+# tooling
+.git/
+node_modules/
+*.test.ts
+*.spec.ts
+
+# config
+tsconfig.json
+.eslintrc*
+biome.json
+
+# docs (keep README in the package)
+CHANGELOG.md
+CONTRIBUTING.md

@@ -1,0 +1,2825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test History Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --surface2:  #1f2333;
+      --border:    #2a2f42;
+      --border2:   #363c54;
+      --text:      #e2e4ec;
+      --muted:     #7b82a0;
+      --accent:    #5b7cf6;
+      --accent2:   #7c9fff;
+
+      --pass:      #2dd4a0;
+      --pass-bg:   rgba(45,212,160,.12);
+      --fail:      #f25f5c;
+      --fail-bg:   rgba(242,95,92,.12);
+      --flaky:     #f5a623;
+      --flaky-bg:  rgba(245,166,35,.12);
+      --skip:      #7b82a0;
+      --skip-bg:   rgba(123,130,160,.12);
+
+      --radius:    8px;
+      --radius-lg: 12px;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .shell {
+      display: grid;
+      grid-template-rows: 56px 1fr auto;
+      grid-template-columns: 220px 1fr;
+      grid-template-areas:
+        "topbar  topbar"
+        "sidebar main"
+        "sidebar footer";
+      min-height: 100vh;
+    }
+
+    .topbar {
+      grid-area: topbar;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+    }
+
+    .topbar-brand svg { flex-shrink: 0; }
+
+    .topbar-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── Sidebar ────────────────────────────────────────────── */
+    .sidebar {
+      grid-area: sidebar;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+    }
+
+    .sidebar-section-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--border2);
+      padding: 0 18px;
+      margin-bottom: 6px;
+      margin-top: 20px;
+    }
+
+    .sidebar-section-label:first-child { margin-top: 0; }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: color .15s, background .15s, border-color .15s;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .sidebar-item:hover {
+      color: var(--text);
+      background: var(--surface2);
+    }
+
+    .sidebar-item.active {
+      color: var(--text);
+      background: rgba(91,124,246,.08);
+      border-left-color: var(--accent);
+    }
+
+    .sidebar-item svg {
+      flex-shrink: 0;
+      opacity: .7;
+    }
+
+    .sidebar-item.active svg { opacity: 1; }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 18px;
+    }
+
+    /* Sidebar search input */
+    .sidebar-search {
+      margin: 4px 14px 8px;
+      position: relative;
+    }
+
+    .sidebar-search input {
+      width: 100%;
+      padding: 7px 10px 7px 30px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 12px;
+      transition: border-color .15s;
+    }
+
+    .sidebar-search input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .sidebar-search input::placeholder { color: var(--muted); }
+
+    .sidebar-search-icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 12px;
+    }
+
+    /* Sidebar run list (mini) */
+    .sidebar-run {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-run:hover { background: var(--surface2); color: var(--text); }
+
+    .sidebar-run.active {
+      background: rgba(91,124,246,.08);
+      border-left-color: var(--accent);
+      color: var(--text);
+    }
+
+    .sidebar-run-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sidebar-run-info { flex: 1; min-width: 0; }
+    .sidebar-run-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-run-stat { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+    .main {
+      grid-area: main;
+      padding: 24px 28px 48px;
+      min-width: 0;
+    }
+
+    /* ── Latest run stat cards ──────────────────────────────── */
+    .latest-run-section {
+      margin-bottom: 28px;
+    }
+
+    .latest-run-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .latest-run-title {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .latest-run-ts {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .latest-stats-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .latest-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-top: 3px solid transparent;
+    }
+
+    .latest-stat.pass-card  { border-top-color: var(--pass); }
+    .latest-stat.fail-card  { border-top-color: var(--fail); }
+    .latest-stat.flaky-card { border-top-color: var(--flaky); }
+    .latest-stat.skip-card  { border-top-color: var(--skip); }
+    .latest-stat.dur-card   { border-top-color: var(--accent); }
+    .latest-stat.rate-card  { border-top-color: var(--accent2); }
+    .latest-stat.total-card { border-top-color: var(--border2); }
+
+    .latest-stat-label {
+      font-size: 10px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+
+    .latest-stat-value {
+      font-size: 26px;
+      font-weight: 600;
+      font-family: var(--mono);
+      line-height: 1;
+    }
+
+    .latest-stat.clickable {
+      cursor: pointer;
+      transition: border-color .15s, background .15s, transform .1s;
+    }
+
+    .latest-stat.clickable:hover {
+      background: var(--surface2);
+      transform: translateY(-1px);
+    }
+
+    .latest-stat.clickable.active-filter {
+      background: var(--surface2);
+      box-shadow: 0 0 0 1px var(--border2);
+    }
+
+    .latest-stat.pass-card.active-filter  { box-shadow: 0 0 0 1px var(--pass); }
+    .latest-stat.fail-card.active-filter  { box-shadow: 0 0 0 1px var(--fail); }
+    .latest-stat.flaky-card.active-filter { box-shadow: 0 0 0 1px var(--flaky); }
+    .latest-stat.skip-card.active-filter  { box-shadow: 0 0 0 1px var(--skip); }
+
+    /* Show all filter banner */
+    .filter-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .filter-banner-label { color: var(--muted); }
+    .filter-banner-label strong { color: var(--text); }
+
+    .filter-banner-clear {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 5px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+
+    .filter-banner-clear:hover { color: var(--text); border-color: var(--text); }
+
+    /* ── Stats row ──────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stat-card-label {
+      font-size: 11px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+
+    .stat-card-value {
+      font-size: 32px;
+      font-weight: 600;
+      font-family: var(--mono);
+      line-height: 1;
+    }
+
+    .stat-card-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Section titles ─────────────────────────────────────── */
+    .section { margin-bottom: 28px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-family: var(--mono);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+
+    /* ── Tab toggle ─────────────────────────────────────────── */
+    .tab-group {
+      display: flex;
+      gap: 2px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3px;
+    }
+
+    .tab-btn {
+      padding: 6px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all .15s;
+    }
+
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* ── Chart panels ───────────────────────────────────────── */
+    .chart-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+    }
+
+    /* Stacked bar chart */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 160px;
+      padding-bottom: 28px; /* room for labels */
+      position: relative;
+      overflow-x: auto;
+    }
+
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 28px;
+      gap: 0;
+      height: 100%;
+      justify-content: flex-end;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .bar-stack {
+      width: 100%;
+      display: flex;
+      flex-direction: column-reverse; /* pass on bottom, fail on top */
+      border-radius: 3px 3px 0 0;
+      overflow: hidden;
+      transition: opacity .15s;
+    }
+
+    .bar-col:hover .bar-stack { opacity: .8; }
+
+    .bar-seg-pass {
+      background: var(--pass);
+      transition: height .3s ease;
+    }
+
+    .bar-seg-fail {
+      background: var(--fail);
+      transition: height .3s ease;
+    }
+
+    .bar-seg-skip {
+      background: var(--skip);
+      opacity: .5;
+      transition: height .3s ease;
+    }
+
+    .bar-lbl {
+      position: absolute;
+      bottom: 0;
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    /* Tooltip */
+    .bar-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      font-size: 11px;
+      font-family: var(--mono);
+      white-space: nowrap;
+      z-index: 20;
+      pointer-events: none;
+      line-height: 1.7;
+    }
+
+    .bar-col:hover .bar-tooltip { display: block; }
+
+    /* Duration line chart */
+    .dur-chart {
+      height: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dur-chart svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* ── Chart legend ───────────────────────────────────────── */
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Two-column layout for charts ───────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .dur-panel .section-title { margin-bottom: 12px; display: block; }
+
+    /* ── Individual test trend ──────────────────────────────── */
+    .test-view { display: none; }
+    .test-view.active { display: block; }
+
+    .search-box {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      margin-bottom: 14px;
+      transition: border-color .15s;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .search-box::placeholder { color: var(--muted); }
+
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .test-grid::-webkit-scrollbar { width: 4px; }
+    .test-grid::-webkit-scrollbar-track { background: transparent; }
+    .test-grid::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    .test-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+
+    .test-card:hover { border-color: var(--border2); background: var(--surface); }
+    .test-card.selected { border-color: var(--accent); background: rgba(91,124,246,.07); }
+
+    .test-card-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .test-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .test-card-project {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Sparkline */
+    .sparkline {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .spark-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .spark-dot.pass  { background: var(--pass); }
+    .spark-dot.fail  { background: var(--fail); }
+    .spark-dot.flaky { background: var(--flaky); }
+    .spark-dot.skip  { background: var(--skip); opacity: .5; }
+    .spark-dot.none  { background: var(--border2); }
+
+    .test-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(91,124,246,.15);
+      color: var(--accent2);
+      border: 1px solid rgba(91,124,246,.25);
+    }
+
+    /* Test trend detail */
+    .test-detail {
+      margin-top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+    }
+
+    .test-detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .test-detail-name {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .test-detail-stats {
+      display: flex;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .test-detail-stat {
+      text-align: right;
+    }
+
+    .test-detail-stat-value {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .test-detail-stat-label {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .trend-row {
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+      border-left: 3px solid transparent;
+      background: var(--surface2);
+      transition: background .15s;
+      overflow: hidden;
+    }
+
+    .trend-row:hover { background: var(--surface); }
+    .trend-row.pass  { border-left-color: var(--pass); }
+    .trend-row.fail  { border-left-color: var(--fail); }
+    .trend-row.flaky { border-left-color: var(--flaky); }
+    .trend-row.skip  { border-left-color: var(--skip); }
+
+    .trend-row-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      cursor: default;
+    }
+
+    .trend-row.has-detail .trend-row-summary { cursor: pointer; }
+
+    .trend-row-left { flex: 1; min-width: 0; }
+
+    .trend-row-date {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .trend-row-runid {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--border2);
+      margin-top: 1px;
+    }
+
+    .trend-row-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .trend-row-status {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      min-width: 46px;
+      text-align: right;
+    }
+
+    .trend-row-dur {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      min-width: 48px;
+      text-align: right;
+    }
+
+    .trend-row-chevron {
+      font-size: 10px;
+      color: var(--muted);
+      transition: transform .2s;
+      width: 14px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .trend-row-chevron.open { transform: rotate(180deg); }
+
+    /* Expandable failure body */
+    .trend-row-body {
+      display: none;
+      padding: 0 12px 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .trend-row-body.open { display: block; }
+
+    /* Annotation label (from test.info().annotations title) */
+    .annot-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--flaky);
+      margin-bottom: 4px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .annot-desc {
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    /* Collapsible raw Playwright error */
+    .error-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      margin-top: 6px;
+      padding: 4px 0;
+    }
+
+    .error-toggle:hover { color: var(--text); }
+
+    .error-toggle-icon {
+      font-size: 9px;
+      transition: transform .15s;
+    }
+
+    .error-toggle-icon.open { transform: rotate(90deg); }
+
+    .trend-row-error {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--fail);
+      margin-top: 4px;
+      padding: 8px 10px;
+      background: var(--fail-bg);
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: none;
+    }
+
+    .trend-row-error.open { display: block; }
+
+    /* Test detail annotation header block */
+    .test-annot-block {
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .test-annot-type {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent2);
+      margin-bottom: 4px;
+    }
+
+    .test-annot-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── Runs list ──────────────────────────────────────────── */
+    .run-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color .15s;
+    }
+
+    .run-card:hover { border-color: var(--border2); }
+
+    .run-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      gap: 16px;
+    }
+
+    .run-card-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .run-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .run-card-ts {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .run-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge.pass  { background: var(--pass-bg);  color: var(--pass);  }
+    .badge.fail  { background: var(--fail-bg);  color: var(--fail);  }
+    .badge.flaky { background: var(--flaky-bg); color: var(--flaky); }
+    .badge.skip  { background: var(--skip-bg);  color: var(--skip);  }
+
+    .run-card-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .run-dur {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .run-chevron {
+      color: var(--muted);
+      font-size: 11px;
+      transition: transform .2s;
+    }
+
+    .run-chevron.open { transform: rotate(180deg); }
+
+    /* Run detail */
+    .run-detail {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 16px 18px;
+    }
+
+    .run-detail.open { display: block; }
+
+    .run-detail-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .show-all-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent2);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .show-all-btn:hover { color: var(--accent); }
+
+    .detail-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .test-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      border-left: 3px solid transparent;
+      background: var(--surface2);
+      margin-bottom: 4px;
+    }
+
+    .test-row.pass  { border-left-color: var(--pass); }
+    .test-row.fail  { border-left-color: var(--fail); }
+    .test-row.flaky { border-left-color: var(--flaky); }
+    .test-row.skip  { border-left-color: var(--skip); opacity: .7; }
+
+    .test-row-body { flex: 1; min-width: 0; }
+
+    .test-row-title {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .test-row-meta {
+      display: flex;
+      gap: 12px;
+      margin-top: 3px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .test-row-error {
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: var(--fail-bg);
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--fail);
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: none;
+    }
+
+    .test-row-error.open { display: block; }
+
+    .test-row-error-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .test-row-error-toggle:hover { color: var(--fail); }
+
+    .test-row-error-icon {
+      font-size: 9px;
+      transition: transform .15s;
+      display: inline-block;
+    }
+
+    .test-row-error-icon.open { transform: rotate(90deg); }
+
+    .artifact-links {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .artifact-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: rgba(91,124,246,.12);
+      border: 1px solid rgba(91,124,246,.25);
+      color: var(--accent2);
+      text-decoration: none;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 11px;
+      transition: background .15s;
+    }
+
+    .artifact-link:hover { background: rgba(91,124,246,.22); }
+
+    /* ── States ─────────────────────────────────────────────── */
+    .state-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      color: var(--muted);
+      text-align: center;
+      gap: 12px;
+    }
+
+    .state-screen-icon {
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    .state-screen h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .state-screen p {
+      font-size: 13px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .shell { grid-template-columns: 180px 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .shell {
+        grid-template-columns: 1fr;
+        grid-template-areas: "topbar" "main";
+      }
+      .sidebar { display: none; }
+      .latest-stats-row { grid-template-columns: repeat(4, 1fr); }
+      .main { padding: 16px 14px 48px; }
+    }
+
+    @media (max-width: 560px) {
+      .latest-stats-row { grid-template-columns: repeat(2, 1fr); }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── Test detail sub-panels ─────────────────────────────── */
+    .detail-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 700px) {
+      .detail-panels { grid-template-columns: 1fr; }
+    }
+
+    .detail-sub-panel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .detail-sub-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Duration mini chart */
+    .dur-mini {
+      height: 72px;
+      position: relative;
+    }
+
+    .dur-mini svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .dur-mini-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .dur-delta {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .dur-delta.up   { color: var(--fail);  background: var(--fail-bg); }
+    .dur-delta.down { color: var(--pass);  background: var(--pass-bg); }
+    .dur-delta.flat { color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
+
+    /* Failure reason bars */
+    .reason-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .reason-row {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .reason-row-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .reason-label {
+      font-size: 11px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 78%;
+      font-family: var(--mono);
+    }
+
+    .reason-count {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .reason-bar-track {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .reason-bar-fill {
+      height: 100%;
+      background: var(--fail);
+      border-radius: 2px;
+      transition: width .4s ease;
+    }
+
+    .reason-bar-fill.flaky { background: var(--flaky); }
+
+    .no-failures-msg {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      padding: 8px 0;
+      text-align: center;
+    }
+
+    /* ── Health grade ───────────────────────────────────────── */
+    .health-grade {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .grade-A { background: var(--pass-bg);  color: var(--pass);  }
+    .grade-B { background: rgba(91,124,246,.15); color: var(--accent2); }
+    .grade-C { background: var(--flaky-bg); color: var(--flaky); }
+    .grade-D { background: rgba(242,95,92,.2); color: var(--fail); }
+    .grade-F { background: var(--fail-bg);  color: var(--fail);  }
+
+    /* ── Slow badge ─────────────────────────────────────────── */
+    .slow-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--flaky-bg);
+      color: var(--flaky);
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Page views (dashboard / trends / gallery) ──────────── */
+    .page-view { display: none; }
+    .page-view.active { display: block; }
+
+    /* ── Trends page ────────────────────────────────────────── */
+    .trends-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 700px) { .trends-grid { grid-template-columns: 1fr; } }
+
+    .trend-mini-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+    }
+
+    .trend-mini-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .trend-mini-current {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .trend-mini-svg {
+      height: 60px;
+      width: 100%;
+    }
+
+    .trend-mini-svg svg { width: 100%; height: 100%; overflow: visible; }
+
+    .trend-mini-footer {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ── Sidebar filter chips ───────────────────────────────── */
+    .sidebar-filter-section {
+      padding: 0 12px;
+      margin-bottom: 6px;
+    }
+
+    .sidebar-filter-group-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--border2);
+      margin: 12px 6px 6px;
+    }
+
+    .sidebar-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .sidebar-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .12s;
+      white-space: nowrap;
+    }
+
+    .sidebar-chip:hover { border-color: var(--border2); color: var(--text); }
+    .sidebar-chip.active { background: rgba(91,124,246,.12); border-color: var(--accent); color: var(--accent2); }
+
+    .sidebar-chip-count {
+      background: var(--border);
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: 9px;
+    }
+
+    .sidebar-chip.active .sidebar-chip-count { background: rgba(91,124,246,.25); }
+
+    /* ── Gallery page ───────────────────────────────────────── */
+    .gallery-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .gallery-run-group {
+      margin-bottom: 28px;
+    }
+
+    .gallery-run-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .gallery-run-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .gallery-run-ts {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .gallery-run-count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .gallery-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .15s, transform .1s;
+    }
+
+    .gallery-item:hover {
+      border-color: var(--border2);
+      transform: translateY(-1px);
+    }
+
+    .gallery-img-wrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .gallery-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-img-placeholder {
+      font-size: 28px;
+      opacity: .3;
+    }
+
+    .gallery-item-info {
+      padding: 8px 10px;
+    }
+
+    .gallery-item-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gallery-item-meta {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.85);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: var(--radius);
+      object-fit: contain;
+    }
+
+    .lightbox-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(255,255,255,.7);
+      text-align: center;
+    }
+
+    .lightbox-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.6);
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .lightbox-close:hover { color: #fff; }
+    /* ── Footer ─────────────────────────────────────────────── */
+    .footer {
+      grid-area: footer;
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--border2);
+    }
+
+    .footer a {
+      color: var(--border2);
+      text-decoration: none;
+      transition: color .15s;
+    }
+
+    .footer a:hover { color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <rect x="1" y="1" width="20" height="20" rx="5" stroke="#5b7cf6" stroke-width="1.5"/>
+        <path d="M6 11l3.5 3.5L16 7" stroke="#5b7cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span id="brandName">pw_dashboard</span>
+      <span id="projectName" style="font-size:11px;font-weight:400;color:var(--muted);padding-left:8px;border-left:1px solid var(--border);margin-left:4px"></span>
+    </div>
+    <div class="topbar-meta" id="topbarMeta">loading…</div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <span class="sidebar-section-label">Navigate</span>
+    <div class="sidebar-item active" id="nav-dashboard" onclick="navTo('dashboard',this)">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".7"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".7"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".7"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".4"/></svg>
+      Dashboard
+    </div>
+    <div class="sidebar-item" id="nav-trends" onclick="navTo('trends',this)">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><polyline points="1,12 4,7 7,9 10,4 14,6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Trends
+    </div>
+    <div class="sidebar-item" id="nav-search" onclick="navTo('search',this)">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      Search tests
+    </div>
+    <div class="sidebar-item" id="nav-gallery" onclick="navTo('gallery',this)">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="8" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="8" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+      Gallery
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-section-label">Filters</span>
+    <div class="sidebar-filter-section" id="sidebarFilters">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--border2);padding:4px 6px">loading…</div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-section-label">Recent runs</span>
+    <div id="sidebarRuns">
+      <div style="padding:8px 18px;font-family:var(--mono);font-size:11px;color:var(--border2)">loading…</div>
+    </div>
+  </nav>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="">
+    <div class="lightbox-title" id="lightboxTitle"></div>
+  </div>
+
+  <!-- Main content -->
+  <main class="main" id="mainContent">
+    <div class="state-screen">
+      <div class="spinner"></div>
+      <p>Loading test history…</p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>created by <a href="https://github.com/acahet" target="_blank" rel="noopener">acahet</a></span>
+    <span id="footerProject"></span>
+  </footer>
+
+</div>
+
+<script>
+// ── Utilities ──────────────────────────────────────────────────────────────
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
+}
+
+function fmtDate(ts) {
+  return new Date(ts).toLocaleString(undefined, {
+    month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function fmtDur(ms) {
+  if (ms < 1000) return ms + 'ms';
+  if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
+  const m = Math.floor(ms / 60000);
+  const s = ((ms % 60000) / 1000).toFixed(0).padStart(2, '0');
+  return `${m}m ${s}s`;
+}
+
+function statusColor(s) {
+  return { passed:'var(--pass)', failed:'var(--fail)', flaky:'var(--flaky)', skipped:'var(--skip)' }[s] ?? 'var(--skip)';
+}
+
+function statusClass(s) {
+  return { passed:'pass', failed:'fail', flaky:'flaky', skipped:'skip' }[s] ?? 'skip';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG — edit these values to customise the dashboard for your project
+// ─────────────────────────────────────────────────────────────────────────────
+const CONFIG = {
+  // Displayed in the browser tab
+  pageTitle: 'Test History Dashboard',
+
+  // Your project name — shown in the topbar next to the dashboard brand
+  projectName: 'My Project',
+
+  // Brand name shown in the top-left of the sidebar
+  brandName: 'pw_dashboard',
+
+  // Path to the JSON index file (relative to this HTML file)
+  historyIndexPath: 'history-index.json',
+
+  // Empty state messages
+  emptyTitle:   'No test history yet',
+  emptyMessage: 'Run your tests to start tracking history.',
+
+  // Error state messages
+  errorTitle:   'Could not load history',
+  errorMessage: 'Make sure history-index.json is in the same directory.',
+};
+// ─────────────────────────────────────────────────────────────────────────────
+let runs = [];
+let allTests = [];
+let selectedTestKey = null;
+let activeFilter = null; // 'passed' | 'failed' | 'flaky' | 'skipped' | null
+let sidebarTagFilter = null;
+let sidebarSpecFilter = null;
+let currentPage = 'dashboard'; // 'dashboard' | 'trends' | 'gallery'
+
+// ── Health grade ───────────────────────────────────────────────────────────
+function computeGrade(run) {
+  if (!run.totalTests) return 'F';
+  const passRate   = run.passed / run.totalTests;
+  const stability  = 1 - ((run.flaky ?? 0) / run.totalTests);
+  const allT       = run.allTests ?? [];
+  const p75        = computeP75(allT.map(t => t.duration));
+  const slowCount  = allT.filter(t => t.duration > p75 * 1.5).length;
+  const perfScore  = 1 - (slowCount / run.totalTests);
+  const score      = (passRate * 0.6 + stability * 0.3 + perfScore * 0.1) * 100;
+  if (score >= 95) return 'A';
+  if (score >= 85) return 'B';
+  if (score >= 70) return 'C';
+  if (score >= 50) return 'D';
+  return 'F';
+}
+
+function computeP75(durations) {
+  if (!durations.length) return 0;
+  const sorted = [...durations].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length * 0.75)];
+}
+
+function isSlowTest(t, p75) { return t.duration > p75 * 1.5; }
+
+// ── Bootstrap ──────────────────────────────────────────────────────────────
+async function init() {
+  // Apply config values that need JS to set
+  document.title = CONFIG.pageTitle;
+  document.getElementById('brandName').textContent = CONFIG.brandName;
+  const pn = document.getElementById('projectName');
+  if (pn && CONFIG.projectName) pn.textContent = CONFIG.projectName;
+  const fp = document.getElementById('footerProject');
+  if (fp && CONFIG.projectName) fp.textContent = CONFIG.projectName;
+
+  try {
+    const res = await fetch(`${CONFIG.historyIndexPath}?ts=${Date.now()}`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error('fetch failed');
+    const data = await res.json();
+    if (!data.runs?.length) { renderEmpty(); return; }
+    runs = data.runs;
+    render();
+  } catch {
+    renderError();
+  }
+}
+
+function renderEmpty() {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="state-screen">
+      <div class="state-screen-icon">🎭</div>
+      <h3>${esc(CONFIG.emptyTitle)}</h3>
+      <p>${esc(CONFIG.emptyMessage)}</p>
+    </div>`;
+}
+
+function renderError() {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="state-screen">
+      <div class="state-screen-icon">⚠️</div>
+      <h3>${esc(CONFIG.errorTitle)}</h3>
+      <p>${esc(CONFIG.errorMessage)}</p>
+    </div>`;
+}
+
+// ── Main render ────────────────────────────────────────────────────────────
+function render() {
+  const latest = runs[0];
+  const totalRuns = runs.length;
+  const avgPass = runs.reduce((s, r) =>
+    s + (r.totalTests > 0 ? r.passed / r.totalTests * 100 : 0), 0) / runs.length;
+  const latestRate = latest.totalTests > 0
+    ? (latest.passed / latest.totalTests * 100).toFixed(1)
+    : '0.0';
+
+  document.getElementById('topbarMeta').textContent =
+    `${totalRuns} runs · last: ${fmtDate(latest.timestamp)}`;
+
+  buildTestIndex();
+  renderSidebar();
+  renderSidebarFilters();
+  renderMainContent(latest, totalRuns, avgPass, latestRate);
+}
+
+function renderMainContent(latest, totalRuns, avgPass, latestRate) {
+  document.getElementById('mainContent').innerHTML = `
+    <!-- Latest run stat cards -->
+    <div class="latest-run-section">
+      <div class="latest-run-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="health-grade grade-${computeGrade(latest)}" title="Suite health grade">${computeGrade(latest)}</span>
+          <span class="latest-run-title">Latest run</span>
+        </div>
+        <span class="latest-run-ts">${fmtDate(latest.timestamp)} · ${fmtDur(latest.duration)}</span>
+      </div>
+      <div class="latest-stats-row">
+        <div class="latest-stat rate-card clickable ${activeFilter===null?'active-filter':''}"
+             onclick="clearFilter()" title="Show all tests">
+          <span class="latest-stat-label">Pass rate · ALL</span>
+          <span class="latest-stat-value" style="color:${latestRate>=80?'var(--pass)':latestRate>=50?'var(--flaky)':'var(--fail)'}">${latestRate}<span style="font-size:16px">%</span></span>
+        </div>
+        <div class="latest-stat pass-card ${latest.passed>0?'clickable':''} ${activeFilter==='passed'?'active-filter':''}"
+             ${latest.passed>0?`onclick="filterLatestRun('passed')" title="Filter: passed"`:''}> 
+          <span class="latest-stat-label">Passed</span>
+          <span class="latest-stat-value" style="color:var(--pass)">${latest.passed}</span>
+        </div>
+        <div class="latest-stat fail-card ${latest.failed>0?'clickable':''} ${activeFilter==='failed'?'active-filter':''}"
+             ${latest.failed>0?`onclick="filterLatestRun('failed')" title="Filter: failed"`:''}> 
+          <span class="latest-stat-label">Failed</span>
+          <span class="latest-stat-value" style="color:${latest.failed>0?'var(--fail)':'var(--muted)'}">${latest.failed}</span>
+        </div>
+        <div class="latest-stat flaky-card ${(latest.flaky??0)>0?'clickable':''} ${activeFilter==='flaky'?'active-filter':''}"
+             ${(latest.flaky??0)>0?`onclick="filterLatestRun('flaky')" title="Filter: flaky"`:''}> 
+          <span class="latest-stat-label">Flaky</span>
+          <span class="latest-stat-value" style="color:${(latest.flaky??0)>0?'var(--flaky)':'var(--muted)'}">${latest.flaky ?? 0}</span>
+        </div>
+        <div class="latest-stat skip-card ${latest.skipped>0?'clickable':''} ${activeFilter==='skipped'?'active-filter':''}"
+             ${latest.skipped>0?`onclick="filterLatestRun('skipped')" title="Filter: skipped"`:''}> 
+          <span class="latest-stat-label">Skipped</span>
+          <span class="latest-stat-value" style="color:var(--muted)">${latest.skipped}</span>
+        </div>
+        <div class="latest-stat total-card">
+          <span class="latest-stat-label">Total</span>
+          <span class="latest-stat-value">${latest.totalTests}</span>
+        </div>
+        <div class="latest-stat dur-card">
+          <span class="latest-stat-label">Duration</span>
+          <span class="latest-stat-value" style="color:var(--accent);font-size:20px">${fmtDur(latest.duration)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trend + duration charts -->
+    <div class="charts-grid">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Test results trend</span>
+          <div class="tab-group">
+            <button class="tab-btn active" onclick="switchTab('overall',this)">Overall</button>
+            <button class="tab-btn" onclick="switchTab('test',this)">Per test</button>
+          </div>
+        </div>
+
+        <!-- Overall trend (stacked bars) -->
+        <div id="overallView">
+          <div class="chart-panel">
+            <div class="bar-chart" id="barChart"></div>
+            <div class="chart-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:var(--pass)"></span>Passed</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--fail)"></span>Failed</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--skip);opacity:.5"></span>Skipped</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-test search + grid (no detail here) -->
+        <div id="testView" class="test-view">
+          <input class="search-box" id="testSearch" placeholder="Search tests, projects, tags…" oninput="filterTests()">
+          <div class="test-grid" id="testGrid"></div>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--muted)" id="testSelectHint">
+            ↑ select a test to see its full history
+          </div>
+        </div>
+      </div>
+
+      <!-- Duration panel -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Run duration</span>
+        </div>
+        <div class="chart-panel dur-panel">
+          <div class="dur-chart" id="durChart"></div>
+          <div class="chart-legend" style="margin-top:8px;padding-top:8px">
+            <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>Duration</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test detail — full width, below the charts grid -->
+    <div id="testDetail" style="margin-bottom:28px"></div>
+
+    <!-- Runs list -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Recent runs (${totalRuns})</span>
+      </div>
+      <div id="runsList"></div>
+    </div>
+  `;
+
+  renderBarChart();
+  renderDurChart();
+  renderRunsList();
+  renderTestGrid(allTests);
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const el = document.getElementById('sidebarRuns');
+  if (!el) return;
+
+  el.innerHTML = runs.slice(0, 15).map((run, idx) => {
+    const isPass = run.failed === 0;
+    const rate   = run.totalTests > 0 ? Math.round(run.passed / run.totalTests * 100) : 0;
+    return `
+      <div class="sidebar-run ${idx === 0 ? 'active' : ''}"
+           onclick="jumpToRun(${idx})">
+        <span class="sidebar-run-dot" style="background:${isPass ? 'var(--pass)' : 'var(--fail)'}"></span>
+        <div class="sidebar-run-info">
+          <div class="sidebar-run-date">${fmtDate(run.timestamp)}</div>
+          <div class="sidebar-run-stat">${rate}% · ${fmtDur(run.duration)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.navTo = function(view, el) {
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  currentPage = view;
+
+  const mc = document.getElementById('mainContent');
+
+  if (view === 'dashboard') {
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (view === 'trends') {
+    mc.innerHTML = '<div id="trendsPage"></div>';
+    renderTrendsPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (view === 'gallery') {
+    mc.innerHTML = '<div id="galleryPage"></div>';
+    renderGalleryPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (view === 'search') {
+    render();
+    setTimeout(() => {
+      const testBtn = document.querySelectorAll('.tab-btn')[1];
+      if (testBtn) switchTab('test', testBtn);
+      document.getElementById('testSearch')?.focus();
+    }, 50);
+  }
+};
+
+// ── Sidebar filters ────────────────────────────────────────────────────────
+function renderSidebarFilters() {
+  const el = document.getElementById('sidebarFilters');
+  if (!el) return;
+
+  // Collect tags across all runs
+  const tagCounts = new Map();
+  const specCounts = new Map();
+  runs.forEach(run => {
+    (run.allTests ?? []).forEach(t => {
+      (t.tags ?? []).forEach(tag => tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1));
+      const spec = t.file?.split('/').pop() ?? t.file;
+      if (spec) specCounts.set(spec, (specCounts.get(spec) ?? 0) + 1);
+    });
+  });
+
+  const tags  = [...tagCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0, 12);
+  const specs = [...specCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0, 8);
+
+  el.innerHTML = `
+    ${tags.length ? `
+      <div class="sidebar-filter-group-title">Tags</div>
+      <div class="sidebar-chips">
+        ${tags.map(([tag, cnt]) => `
+          <div class="sidebar-chip ${sidebarTagFilter===tag?'active':''}"
+               onclick="toggleTagFilter(${JSON.stringify(tag)})">
+            ${esc(tag)}
+            <span class="sidebar-chip-count">${cnt}</span>
+          </div>`).join('')}
+      </div>` : ''}
+    ${specs.length ? `
+      <div class="sidebar-filter-group-title">Specs</div>
+      <div class="sidebar-chips">
+        ${specs.map(([spec, cnt]) => `
+          <div class="sidebar-chip ${sidebarSpecFilter===spec?'active':''}"
+               onclick="toggleSpecFilter(${JSON.stringify(spec)})">
+            ${esc(spec)}
+            <span class="sidebar-chip-count">${cnt}</span>
+          </div>`).join('')}
+      </div>` : ''}`;
+}
+
+window.toggleTagFilter = function(tag) {
+  sidebarTagFilter = sidebarTagFilter === tag ? null : tag;
+  sidebarSpecFilter = null;
+  renderSidebarFilters();
+  // Switch to search view and apply filter
+  const searchBtn = document.getElementById('nav-search');
+  if (searchBtn) navTo('search', searchBtn);
+  setTimeout(() => {
+    const input = document.getElementById('testSearch');
+    if (input) { input.value = tag; filterTests(); }
+  }, 80);
+};
+
+window.toggleSpecFilter = function(spec) {
+  sidebarSpecFilter = sidebarSpecFilter === spec ? null : spec;
+  sidebarTagFilter = null;
+  renderSidebarFilters();
+  const searchBtn = document.getElementById('nav-search');
+  if (searchBtn) navTo('search', searchBtn);
+  setTimeout(() => {
+    const input = document.getElementById('testSearch');
+    if (input) { input.value = spec; filterTests(); }
+  }, 80);
+};
+
+// ── Trends page ────────────────────────────────────────────────────────────
+function renderTrendsPage() {
+  const el = document.getElementById('trendsPage');
+  if (!el) return;
+
+  const display = runs.slice(0, 30).reverse();
+
+  const passRates  = display.map(r => r.totalTests > 0 ? (r.passed / r.totalTests * 100) : 0);
+  const durations  = display.map(r => r.duration);
+  const flakyCnts  = display.map(r => r.flaky ?? 0);
+  const slowCnts   = display.map(r => {
+    const allT = r.allTests ?? [];
+    const p75  = computeP75(allT.map(t => t.duration));
+    return allT.filter(t => isSlowTest(t, p75)).length;
+  });
+
+  el.innerHTML = `
+    <div class="section-header" style="margin-bottom:20px">
+      <span class="section-title">Trends · last ${display.length} runs</span>
+    </div>
+    <div class="trends-grid">
+      ${buildTrendMiniPanel('Pass rate', passRates, display, v => v.toFixed(1)+'%', 'var(--pass)', true)}
+      ${buildTrendMiniPanel('Duration', durations, display, v => fmtDur(v), 'var(--accent)', false)}
+      ${buildTrendMiniPanel('Flaky tests', flakyCnts, display, v => v+'', 'var(--flaky)', false)}
+      ${buildTrendMiniPanel('Slow tests', slowCnts, display, v => v+'', '#a78bfa', false)}
+    </div>`;
+}
+
+function buildTrendMiniPanel(label, values, display, fmt, color, higherIsBetter) {
+  const current = values[values.length - 1] ?? 0;
+  const prev    = values[values.length - 2] ?? current;
+  const delta   = prev !== 0 ? ((current - prev) / Math.abs(prev) * 100) : 0;
+  const deltaGood = higherIsBetter ? delta >= 0 : delta <= 0;
+  const deltaStr  = delta === 0 ? '~ stable'
+    : `${delta > 0 ? '+' : ''}${delta.toFixed(0)}% vs prev`;
+  const deltaColor = delta === 0 ? 'var(--muted)' : deltaGood ? 'var(--pass)' : 'var(--fail)';
+
+  if (values.length < 2) {
+    return `<div class="trend-mini-panel">
+      <div class="trend-mini-title">${label}</div>
+      <div class="trend-mini-current" style="color:${color}">${fmt(current)}</div>
+      <div style="color:var(--muted);font-family:var(--mono);font-size:11px">Not enough data</div>
+    </div>`;
+  }
+
+  const W = 280, H = 55;
+  const minV = Math.min(...values);
+  const maxV = Math.max(...values);
+  const range = maxV - minV || 1;
+
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * W;
+    const y = H - ((v - minV) / range) * (H - 8) - 4;
+    return [x.toFixed(1), y.toFixed(1)];
+  });
+
+  const polyline = pts.map(p => p.join(',')).join(' ');
+  const areaPath = `M${pts[0][0]},${H} ${pts.map(p=>`L${p[0]},${p[1]}`).join(' ')} L${pts[pts.length-1][0]},${H} Z`;
+
+  const dotsSvg = pts.map((p, i) =>
+    `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="${color}" opacity=".85">
+      <title>${fmt(values[i])} · ${fmtDate(display[i].timestamp)}</title>
+    </circle>`
+  ).join('');
+
+  return `
+    <div class="trend-mini-panel">
+      <div class="trend-mini-title">
+        ${label}
+        <span style="color:${deltaColor};font-size:10px">${deltaStr}</span>
+      </div>
+      <div class="trend-mini-current" style="color:${color}">${fmt(current)}</div>
+      <div class="trend-mini-svg">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="tg-${label.replace(/\s/g,'')}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="${color}" stop-opacity=".2"/>
+              <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="${areaPath}" fill="url(#tg-${label.replace(/\s/g,'')})"/>
+          <polyline points="${polyline}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          ${dotsSvg}
+        </svg>
+      </div>
+      <div class="trend-mini-footer">
+        <span>min ${fmt(Math.min(...values))}</span>
+        <span>avg ${fmt(values.reduce((a,b)=>a+b,0)/values.length)}</span>
+        <span>max ${fmt(Math.max(...values))}</span>
+      </div>
+    </div>`;
+}
+
+// ── Gallery page ────────────────────────────────────────────────────────────
+function renderGalleryPage() {
+  const el = document.getElementById('galleryPage');
+  if (!el) return;
+
+  // Collect all screenshots across all runs
+  const groups = runs.map(run => {
+    const shots = (run.allTests ?? []).filter(t => t.artifacts?.screenshot);
+    return { run, shots };
+  }).filter(g => g.shots.length > 0);
+
+  if (!groups.length) {
+    el.innerHTML = `
+      <div class="section-header" style="margin-bottom:20px">
+        <span class="section-title">Screenshots gallery</span>
+      </div>
+      <div class="gallery-empty">
+        No screenshots found.<br>Screenshots are captured on failure — run tests with <code>screenshot: 'on'</code> or <code>'on-first-retry'</code>.
+      </div>`;
+    return;
+  }
+
+  const totalShots = groups.reduce((s, g) => s + g.shots.length, 0);
+
+  el.innerHTML = `
+    <div class="section-header" style="margin-bottom:20px">
+      <span class="section-title">Screenshots gallery · ${totalShots} image${totalShots !== 1 ? 's' : ''}</span>
+    </div>
+    ${groups.map(({ run, shots }) => `
+      <div class="gallery-run-group">
+        <div class="gallery-run-header">
+          <span class="gallery-run-dot" style="background:${run.failed===0?'var(--pass)':'var(--fail)'}"></span>
+          <span class="gallery-run-ts">${fmtDate(run.timestamp)}</span>
+          <span class="gallery-run-count">${shots.length} screenshot${shots.length!==1?'s':''}</span>
+        </div>
+        <div class="gallery-grid">
+          ${shots.map(t => `
+            <div class="gallery-item" onclick="openLightbox('${esc(t.artifacts.screenshot)}','${esc(t.title)}')">
+              <div class="gallery-img-wrap">
+                <img src="${esc(t.artifacts.screenshot)}" alt="${esc(t.title)}"
+                     onerror="this.parentElement.innerHTML='<span class=\\'gallery-img-placeholder\\'>📷</span>'">
+              </div>
+              <div class="gallery-item-info">
+                <div class="gallery-item-title">${esc(t.title)}</div>
+                <div class="gallery-item-meta">${esc(t.project)} · ${fmtDur(t.duration)}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`).join('')}`;
+}
+
+window.openLightbox = function(src, title) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightboxTitle').textContent = title;
+  document.getElementById('lightbox').classList.add('open');
+};
+
+window.closeLightbox = function() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightboxImg').src = '';
+};
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+window.jumpToRun = function(idx) {
+  // Highlight sidebar item
+  document.querySelectorAll('.sidebar-run').forEach((r, i) => r.classList.toggle('active', i === idx));
+  // Open that run card in the list
+  const card = document.getElementById(`run-${idx}`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Auto-open if not already open
+  const detail = document.getElementById(`detail-${idx}`);
+  if (detail && !detail.classList.contains('open')) toggleRun(idx);
+};
+
+// ── Stacked bar chart ──────────────────────────────────────────────────────
+function renderBarChart() {
+  const el = document.getElementById('barChart');
+  const display = runs.slice(0, 30).reverse();
+  const maxTotal = Math.max(...display.map(r => r.totalTests), 1);
+
+  el.innerHTML = display.map(r => {
+    const pct = v => ((v / maxTotal) * 132).toFixed(1); // 132px usable height
+    const passH  = pct(r.passed);
+    const failH  = pct(r.failed);
+    const skipH  = pct(r.skipped);
+    const stackH = (+passH + +failH + +skipH);
+    const date   = fmtDate(r.timestamp).split(',')[0];
+    const rate   = r.totalTests > 0 ? (r.passed / r.totalTests * 100).toFixed(0) : 0;
+
+    return `
+      <div class="bar-col">
+        <div class="bar-tooltip">
+          <div style="color:var(--pass)">${r.passed} passed</div>
+          ${r.failed  > 0 ? `<div style="color:var(--fail)">${r.failed} failed</div>` : ''}
+          ${r.flaky   > 0 ? `<div style="color:var(--flaky)">${r.flaky} flaky</div>` : ''}
+          ${r.skipped > 0 ? `<div style="color:var(--skip)">${r.skipped} skipped</div>` : ''}
+          <div style="color:var(--muted);margin-top:2px">${rate}% pass · ${fmtDur(r.duration)}</div>
+        </div>
+        <div class="bar-stack" style="height:${stackH}px">
+          ${r.skipped > 0 ? `<div class="bar-seg-skip"  style="height:${skipH}px"></div>` : ''}
+          ${r.failed  > 0 ? `<div class="bar-seg-fail"  style="height:${failH}px"></div>` : ''}
+          <div class="bar-seg-pass" style="height:${passH}px"></div>
+        </div>
+        <div class="bar-lbl">${date}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Duration line chart (SVG) ─────────────────────────────────────────────
+function renderDurChart() {
+  const el = document.getElementById('durChart');
+  const display = runs.slice(0, 30).reverse();
+  if (display.length < 2) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Not enough data yet</div>'; return; }
+
+  const W = 300, H = 70;
+  const durations = display.map(r => r.duration);
+  const minD = Math.min(...durations);
+  const maxD = Math.max(...durations);
+  const range = maxD - minD || 1;
+
+  const pts = display.map((r, i) => {
+    const x = (i / (display.length - 1)) * W;
+    const y = H - ((r.duration - minD) / range) * (H - 10) - 4;
+    return [x.toFixed(1), y.toFixed(1)];
+  });
+
+  const polyline = pts.map(p => p.join(',')).join(' ');
+  const areaPath = `M${pts[0][0]},${H} ` +
+    pts.map(p => `L${p[0]},${p[1]}`).join(' ') +
+    ` L${pts[pts.length-1][0]},${H} Z`;
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="durGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity=".25"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaPath}" fill="url(#durGrad)"/>
+      <polyline points="${polyline}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="var(--accent)" opacity=".8">
+        <title>${fmtDur(display[i].duration)} · ${fmtDate(display[i].timestamp)}</title>
+      </circle>`).join('')}
+    </svg>`;
+}
+
+// ── Tab switch ─────────────────────────────────────────────────────────────
+window.switchTab = function(view, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('overallView').style.display = view === 'overall' ? 'block' : 'none';
+  const tv = document.getElementById('testView');
+  tv.style.display = view === 'test' ? 'block' : 'none';
+  if (view === 'test') tv.classList.add('active');
+};
+
+// ── Test index & grid ──────────────────────────────────────────────────────
+function buildTestIndex() {
+  const seen = new Map();
+  runs.forEach(run => {
+    (run.allTests ?? []).forEach(t => {
+      const key = `${t.project}::${t.title}`;
+      if (!seen.has(key)) seen.set(key, { title: t.title, project: t.project, tags: t.tags ?? [], key });
+    });
+  });
+  allTests = [...seen.values()].sort((a, b) =>
+    a.project !== b.project ? a.project.localeCompare(b.project) : a.title.localeCompare(b.title)
+  );
+}
+
+function getSparkline(testKey) {
+  // Last 10 runs, oldest first
+  const [project, ...rest] = testKey.split('::');
+  const title = rest.join('::');
+  return runs.slice(0, 10).reverse().map(run => {
+    const t = (run.allTests ?? []).find(x => x.project === project && x.title === title);
+    return t ? statusClass(t.status) : 'none';
+  });
+}
+
+function renderTestGrid(tests) {
+  const grid = document.getElementById('testGrid');
+  if (!grid) return;
+
+  if (!tests.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px">No tests found.</div>';
+    return;
+  }
+
+  grid.innerHTML = tests.map(t => {
+    const spark = getSparkline(t.key);
+    const tagsHtml = t.tags.length
+      ? `<div class="test-tags">${t.tags.map(g => `<span class="tag">${esc(g)}</span>`).join('')}</div>`
+      : '';
+    return `
+      <div class="test-card ${selectedTestKey === t.key ? 'selected' : ''}"
+           data-key="${esc(t.key)}">
+        <div class="test-card-name">${esc(t.title)}</div>
+        <div class="test-card-meta">
+          <span class="test-card-project">${esc(t.project)}</span>
+          <div class="sparkline" title="Last 10 runs (oldest → newest)">
+            ${spark.map(s => `<span class="spark-dot ${s}"></span>`).join('')}
+          </div>
+        </div>
+        ${tagsHtml}
+      </div>`;
+  }).join('');
+
+  // Re-attach delegation each render (grid is re-created each time)
+  grid.onclick = function(e) {
+    const card = e.target.closest('.test-card');
+    if (!card) return;
+    const key = card.dataset.key;
+    if (key) selectTest(key);
+  };
+}
+
+window.filterTests = function() {
+  const q = document.getElementById('testSearch').value.toLowerCase();
+  const filtered = allTests.filter(t =>
+    t.title.toLowerCase().includes(q) ||
+    t.project.toLowerCase().includes(q) ||
+    t.tags.some(g => g.toLowerCase().includes(q))
+  );
+  renderTestGrid(filtered);
+};
+
+function selectTest(key) {
+  selectedTestKey = key;
+  const hint = document.getElementById('testSelectHint');
+  if (hint) hint.style.display = 'none';
+  const q = document.getElementById('testSearch')?.value?.toLowerCase() ?? '';
+  const filtered = q
+    ? allTests.filter(t => t.title.toLowerCase().includes(q) || t.project.toLowerCase().includes(q) || t.tags.some(g => g.toLowerCase().includes(q)))
+    : allTests;
+  renderTestGrid(filtered);
+  const [project, ...rest] = key.split('::');
+  const title = rest.join('::');
+  renderTestDetail(project, title);
+}
+window.selectTest = selectTest;
+
+function renderTestDetail(project, title) {
+  const detail = document.getElementById('testDetail');
+  if (!detail) return;
+
+  // Collect history oldest-first for charts, newest-first for the run list
+  const historyAsc = runs.slice().reverse().map(run => {
+    const t = (run.allTests ?? []).find(x => x.project === project && x.title === title);
+    return t ? { ts: run.timestamp, runId: run.runId, ...t } : null;
+  }).filter(Boolean);
+
+  const historyDesc = [...historyAsc].reverse();
+
+  const passed = historyAsc.filter(h => h.status === 'passed').length;
+  const failed = historyAsc.filter(h => h.status === 'failed').length;
+  const flaky  = historyAsc.filter(h => h.status === 'flaky').length;
+  const rate   = historyAsc.length ? (passed / historyAsc.length * 100).toFixed(1) : 0;
+
+  // Pull annotations from the most recent run that has them
+  const annotations = historyDesc.find(h => h.annotations?.length)?.annotations ?? [];
+  const annotTitle  = annotations.find(a => a.type === 'title' || a.type === 'description')?.description ?? null;
+  const annotDesc   = annotations.find(a => a.type === 'description')?.description ?? null;
+  // All non-title/description annotations shown as metadata chips
+  const metaAnnots  = annotations.filter(a => a.type !== 'title' && a.type !== 'description');
+
+  detail.innerHTML = `
+    <div class="test-detail">
+
+      <!-- Header: name + summary stats -->
+      <div class="test-detail-header">
+        <div>
+          <div class="test-detail-name">${esc(title)}</div>
+          ${metaAnnots.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            ${metaAnnots.map(a => `<span class="tag" style="background:rgba(124,159,255,.12);color:var(--accent2);border-color:rgba(124,159,255,.2)">${esc(a.type)}${a.description ? ': ' + esc(a.description) : ''}</span>`).join('')}
+          </div>` : ''}
+        </div>
+        <div class="test-detail-stats">
+          <div class="test-detail-stat">
+            <div class="test-detail-stat-value" style="color:var(--pass)">${passed}</div>
+            <div class="test-detail-stat-label">passed</div>
+          </div>
+          ${failed > 0 ? `<div class="test-detail-stat">
+            <div class="test-detail-stat-value" style="color:var(--fail)">${failed}</div>
+            <div class="test-detail-stat-label">failed</div>
+          </div>` : ''}
+          ${flaky > 0 ? `<div class="test-detail-stat">
+            <div class="test-detail-stat-value" style="color:var(--flaky)">${flaky}</div>
+            <div class="test-detail-stat-label">flaky</div>
+          </div>` : ''}
+          <div class="test-detail-stat">
+            <div class="test-detail-stat-value" style="color:${rate>=80?'var(--pass)':rate>=50?'var(--flaky)':'var(--fail)'}">${rate}<span style="font-size:14px">%</span></div>
+            <div class="test-detail-stat-label">pass rate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Annotation description block (if any) -->
+      ${annotDesc ? `
+        <div class="test-annot-block">
+          <div class="test-annot-type">description</div>
+          <div class="test-annot-text">${esc(annotDesc)}</div>
+        </div>` : ''}
+
+      <!-- Sub-panels: duration chart + failure reasons -->
+      <div class="detail-panels">
+        ${buildDurationPanel(historyAsc)}
+        ${buildFailureReasonsPanel(historyAsc)}
+      </div>
+
+      <!-- Per-run history list -->
+      ${historyDesc.map((h, i) => renderTrendRow(h, i)).join('')}
+    </div>`;
+
+  detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderTrendRow(h, i) {
+  const hasError    = !!(h.error);
+  const annotTitle  = h.annotations?.find(a => a.type === 'title')?.description ?? null;
+  const hasDetail   = hasError || annotTitle;
+  const rowId       = `tr-${i}-${Date.now()}`;
+
+  return `
+    <div class="trend-row ${statusClass(h.status)}${hasDetail ? ' has-detail' : ''}" id="${rowId}">
+      <div class="trend-row-summary" ${hasDetail ? `onclick="toggleTrendRow('${rowId}')"` : ''}>
+        <div class="trend-row-left">
+          <div class="trend-row-date">${fmtDate(h.ts)}</div>
+          <div class="trend-row-runid">${esc(h.runId)}</div>
+        </div>
+        <div class="trend-row-right">
+          <div class="trend-row-dur">${fmtDur(h.duration)}</div>
+          <div class="trend-row-status" style="color:${statusColor(h.status)}">${h.status}</div>
+          ${hasDetail ? `<span class="trend-row-chevron" id="chev-${rowId}">▼</span>` : '<span style="width:14px"></span>'}
+        </div>
+      </div>
+      ${hasDetail ? `
+        <div class="trend-row-body" id="body-${rowId}">
+          ${annotTitle ? `
+            <div class="annot-title">
+              <span>⚑</span> ${esc(annotTitle)}
+            </div>` : ''}
+          ${hasError ? `
+            <div class="error-toggle" onclick="toggleError('err-${rowId}', 'etoggle-${rowId}')">
+              <span class="error-toggle-icon" id="etoggle-${rowId}">▶</span>
+              playwright error
+            </div>
+            <div class="trend-row-error" id="err-${rowId}">${esc(h.error)}</div>` : ''}
+        </div>` : ''}
+    </div>`;
+}
+
+window.toggleTrendRow = function(rowId) {
+  const body = document.getElementById(`body-${rowId}`);
+  const chev = document.getElementById(`chev-${rowId}`);
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (chev) chev.classList.toggle('open', open);
+};
+
+window.toggleError = function(errId, toggleId) {
+  const err    = document.getElementById(errId);
+  const toggle = document.getElementById(toggleId);
+  if (!err) return;
+  const open = err.classList.toggle('open');
+  if (toggle) toggle.classList.toggle('open', open);
+};
+
+// ── Duration mini-chart ────────────────────────────────────────────────────
+function buildDurationPanel(historyAsc) {
+  if (historyAsc.length < 2) {
+    return `<div class="detail-sub-panel">
+      <div class="detail-sub-title">Duration over time</div>
+      <div class="no-failures-msg">Not enough data yet</div>
+    </div>`;
+  }
+
+  const durations = historyAsc.map(h => h.duration);
+  const minD  = Math.min(...durations);
+  const maxD  = Math.max(...durations);
+  const range = maxD - minD || 1;
+  const W = 260, H = 60;
+
+  const pts = historyAsc.map((h, i) => {
+    const x = (i / (historyAsc.length - 1)) * W;
+    const y = H - ((h.duration - minD) / range) * (H - 8) - 4;
+    return [x.toFixed(1), y.toFixed(1), h];
+  });
+
+  const polyline = pts.map(p => `${p[0]},${p[1]}`).join(' ');
+  const areaPath = `M${pts[0][0]},${H} ` +
+    pts.map(p => `L${p[0]},${p[1]}`).join(' ') +
+    ` L${pts[pts.length-1][0]},${H} Z`;
+
+  // Colour the line by whether the test was passing or failing each run
+  // Segment approach: draw individual coloured dots per point
+  const dots = pts.map(([x, y, h]) => {
+    const c = h.status === 'passed' ? 'var(--pass)'
+            : h.status === 'flaky'  ? 'var(--flaky)'
+            : 'var(--fail)';
+    return `<circle cx="${x}" cy="${y}" r="3" fill="${c}">
+      <title>${fmtDur(h.duration)} · ${h.status} · ${fmtDate(h.ts)}</title>
+    </circle>`;
+  }).join('');
+
+  // Delta: compare last run to previous run
+  const last = durations[durations.length - 1];
+  const prev = durations[durations.length - 2];
+  const deltaPct = ((last - prev) / prev * 100);
+  const deltaSign = deltaPct > 5 ? 'up' : deltaPct < -5 ? 'down' : 'flat';
+  const deltaLabel = deltaSign === 'flat'
+    ? '~ stable'
+    : `${deltaPct > 0 ? '+' : ''}${deltaPct.toFixed(0)}% vs prev`;
+
+  return `
+    <div class="detail-sub-panel">
+      <div class="detail-sub-title">
+        Duration over time
+        <span class="dur-delta ${deltaSign}">${deltaLabel}</span>
+      </div>
+      <div class="dur-mini">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="tdGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity=".18"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="${areaPath}" fill="url(#tdGrad)"/>
+          <polyline points="${polyline}" fill="none" stroke="var(--accent)" stroke-width="1.5"
+            stroke-linejoin="round" stroke-linecap="round" stroke-opacity=".5"/>
+          ${dots}
+        </svg>
+      </div>
+      <div class="dur-mini-meta">
+        <span>min ${fmtDur(minD)}</span>
+        <span>avg ${fmtDur(Math.round(durations.reduce((a,b)=>a+b,0)/durations.length))}</span>
+        <span>max ${fmtDur(maxD)}</span>
+      </div>
+    </div>`;
+}
+
+// ── Failure reasons panel ──────────────────────────────────────────────────
+function buildFailureReasonsPanel(historyAsc) {
+  const failures = historyAsc.filter(h => h.status === 'failed' || h.status === 'flaky');
+
+  if (!failures.length) {
+    return `<div class="detail-sub-panel">
+      <div class="detail-sub-title">Failure reasons</div>
+      <div class="no-failures-msg" style="color:var(--pass)">✓ No failures recorded</div>
+    </div>`;
+  }
+
+  // Group errors by normalised message — strip line numbers / file paths
+  // so the same logical error groups together even if the stack changes slightly
+  const counts = new Map();
+  for (const h of failures) {
+    const raw = h.error ?? '(no error message)';
+    // Normalise: first line only, collapse numbers, trim path prefixes
+    const key = raw
+      .split('\n')[0]
+      .replace(/\d+/g, 'N')          // collapse all numbers → N
+      .replace(/'.+?'/g, "'…'")      // collapse quoted strings
+      .replace(/".+?"/g, '"…"')
+      .trim()
+      .substring(0, 80);
+    const prev = counts.get(key) ?? { count: 0, isFlaky: false };
+    counts.set(key, {
+      count: prev.count + 1,
+      isFlaky: prev.isFlaky || h.status === 'flaky',
+      latest: h.ts,
+    });
+  }
+
+  // Sort by frequency desc
+  const sorted = [...counts.entries()].sort((a, b) => b[1].count - a[1].count);
+  const maxCount = sorted[0][1].count;
+
+  const rows = sorted.slice(0, 6).map(([label, { count, isFlaky }]) => {
+    const pct = (count / maxCount * 100).toFixed(0);
+    const times = count === 1 ? '1 time' : `${count}×`;
+    return `
+      <div class="reason-row">
+        <div class="reason-row-header">
+          <span class="reason-label" title="${esc(label)}">${esc(label)}</span>
+          <span class="reason-count">${times}</span>
+        </div>
+        <div class="reason-bar-track">
+          <div class="reason-bar-fill ${isFlaky ? 'flaky' : ''}" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const more = sorted.length > 6
+    ? `<div class="reason-count" style="margin-top:4px">+${sorted.length - 6} more distinct errors</div>`
+    : '';
+
+  return `
+    <div class="detail-sub-panel">
+      <div class="detail-sub-title">
+        Failure reasons
+        <span>${failures.length} failure${failures.length > 1 ? 's' : ''} total</span>
+      </div>
+      <div class="reason-list">${rows}</div>
+      ${more}
+    </div>`; 
+}
+
+// ── Latest run filter ──────────────────────────────────────────────────────
+window.filterLatestRun = function(status) {
+  activeFilter = status;
+  const latest = runs[0];
+  const latestRate = latest.totalTests > 0 ? (latest.passed / latest.totalTests * 100).toFixed(1) : '0.0';
+  const totalRuns = runs.length;
+  const avgPass = runs.reduce((s, r) => s + (r.totalTests > 0 ? r.passed / r.totalTests * 100 : 0), 0) / runs.length;
+  renderMainContent(latest, totalRuns, avgPass, latestRate);
+};
+
+window.clearFilter = function() {
+  activeFilter = null;
+  const latest = runs[0];
+  const latestRate = latest.totalTests > 0 ? (latest.passed / latest.totalTests * 100).toFixed(1) : '0.0';
+  const totalRuns = runs.length;
+  const avgPass = runs.reduce((s, r) => s + (r.totalTests > 0 ? r.passed / r.totalTests * 100 : 0), 0) / runs.length;
+  renderMainContent(latest, totalRuns, avgPass, latestRate);
+};
+
+// ── Runs list ──────────────────────────────────────────────────────────────
+function renderRunsList() {
+  const el = document.getElementById('runsList');
+
+  el.innerHTML = runs.map((run, idx) => {
+    const allT   = run.allTests ?? [];
+    const isPass = run.failed === 0;
+    const p75    = computeP75(allT.map(t => t.duration));
+
+    const isLatest     = idx === 0;
+    const filteredT    = (isLatest && activeFilter) ? allT.filter(t => t.status === activeFilter) : allT;
+    const notable      = filteredT.filter(t => t.status === 'failed' || t.status === 'flaky');
+    const displayTests = (isLatest && activeFilter) ? filteredT : notable;
+    const hasMore      = !activeFilter && allT.length > notable.length;
+    const isFiltered   = isLatest && activeFilter;
+
+    return `
+      <div class="run-card" id="run-${idx}">
+        <div class="run-card-header" onclick="toggleRun(${idx})">
+          <div class="run-card-left">
+            <span class="run-status-dot" style="background:${isPass ? 'var(--pass)' : 'var(--fail)'}"></span>
+            <span class="run-card-ts">${fmtDate(run.timestamp)}</span>
+            <div class="run-badges">
+              <span class="badge pass">${run.passed} passed</span>
+              ${run.failed  > 0 ? `<span class="badge fail">${run.failed} failed</span>`   : ''}
+              ${run.flaky   > 0 ? `<span class="badge flaky">${run.flaky} flaky</span>`   : ''}
+              ${run.skipped > 0 ? `<span class="badge skip">${run.skipped} skipped</span>` : ''}
+            </div>
+          </div>
+          <div class="run-card-right">
+            <span class="run-dur">${fmtDur(run.duration)}</span>
+            ${allT.length > 0 ? `<span class="run-chevron" id="chev-${idx}">▼</span>` : ''}
+          </div>
+        </div>
+        ${allT.length > 0 ? `
+          <div class="run-detail ${isLatest && activeFilter ? 'open' : ''}" id="detail-${idx}">
+            ${isFiltered ? `
+              <div class="filter-banner">
+                <span class="filter-banner-label">Showing <strong>${filteredT.length}</strong> ${activeFilter} test${filteredT.length !== 1 ? 's' : ''} from this run</span>
+                <button class="filter-banner-clear" onclick="clearFilter()">✕ Show all</button>
+              </div>` :
+              notable.length > 0 ? `
+              <div class="run-detail-toggle">
+                <span class="detail-label">Failed &amp; flaky (${notable.length})</span>
+                ${hasMore ? `<button class="show-all-btn" id="showall-${idx}" onclick="showAllTests(${idx})">show all ${allT.length} tests</button>` : ''}
+              </div>` :
+              `<div class="run-detail-toggle">
+                <span class="detail-label">All tests (${allT.length})</span>
+              </div>`
+            }
+            <div id="tests-${idx}">
+              ${displayTests.length ? renderTestRows(displayTests, p75) : `<div style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:8px 0">No ${activeFilter} tests in this run.</div>`}
+            </div>
+          </div>` : ''}
+      </div>`;
+  }).join('');
+
+  if (activeFilter) {
+    const chev = document.getElementById('chev-0');
+    if (chev) chev.classList.add('open');
+  }
+}
+
+function renderTestRows(tests, p75 = 0) {
+  return tests.map((t, i) => {
+    const errId = `tre-${i}-${Math.random().toString(36).slice(2,7)}`;
+    const slow  = p75 > 0 && isSlowTest(t, p75);
+    return `
+    <div class="test-row ${statusClass(t.status)}">
+      <div class="test-row-body">
+        <div class="test-row-title" style="display:flex;align-items:center;gap:6px">
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
+          ${slow ? `<span class="slow-badge">SLOW</span>` : ''}
+        </div>
+        <div class="test-row-meta">
+          <span>${esc(t.file)}</span>
+          <span>${esc(t.project)}</span>
+          <span>${fmtDur(t.duration)}</span>
+        </div>
+        ${t.error ? `
+          <button class="test-row-error-toggle" onclick="toggleRowError('${errId}')">
+            <span class="test-row-error-icon" id="icon-${errId}">▶</span>
+            error
+          </button>
+          <div class="test-row-error" id="${errId}">${esc(t.error)}</div>` : ''}
+        ${(t.artifacts?.trace || t.artifacts?.screenshot) ? `
+          <div class="artifact-links">
+            ${t.artifacts.trace ? `<a href="${esc(t.artifacts.trace)}" download class="artifact-link">↓ trace</a>` : ''}
+            ${t.artifacts.screenshot ? `<a href="${esc(t.artifacts.screenshot)}" download class="artifact-link">↓ screenshot</a>` : ''}
+          </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleRowError = function(errId) {
+  const el   = document.getElementById(errId);
+  const icon = document.getElementById(`icon-${errId}`);
+  if (!el) return;
+  const open = el.classList.toggle('open');
+  if (icon) icon.classList.toggle('open', open);
+};
+
+window.toggleRun = function(idx) {
+  const detail = document.getElementById(`detail-${idx}`);
+  const chev   = document.getElementById(`chev-${idx}`);
+  if (!detail) return;
+  const open = detail.classList.toggle('open');
+  if (chev) chev.classList.toggle('open', open);
+};
+
+window.showAllTests = function(idx) {
+  const btn = document.getElementById(`showall-${idx}`);
+  const container = document.getElementById(`tests-${idx}`);
+  if (!btn || !container) return;
+  container.innerHTML = renderTestRows(runs[idx].allTests ?? []);
+  btn.remove();
+};
+
+// ── Go ─────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
