@@ -14,6 +14,10 @@ interface Annotation {
 	description?: string;
 }
 
+type TestCaseWithTags = TestCase & {
+	tags: string[];
+};
+
 interface TestInfo {
 	title: string;
 	file: string;
@@ -23,6 +27,7 @@ interface TestInfo {
 	error?: string;
 	tags?: string[];
 	annotations?: Annotation[];
+	attachmentPaths?: string[];
 	artifacts: {
 		trace?: string;
 		screenshot?: string;
@@ -190,18 +195,35 @@ class LocalHistoryReporter implements Reporter {
 		result: TestResult | null,
 		status: string,
 	): TestInfo {
+		const projectName = test.parent?.project()?.name || 'unknown';
+		const relativePath = path.relative(process.cwd(), test.location.file);
+
+		// Keep backward-compatible tag extraction shape.
+		const testTags =
+			(test as TestCaseWithTags).tags ??
+			(test.tags.length > 0 ? test.tags : []);
+
+		const attachmentPaths = (result?.attachments ?? [])
+			.map((a) => a.path)
+			.filter((p): p is string => typeof p === 'string');
+
 		return {
 			title: test.title,
-			file: path.relative(process.cwd(), test.location.file),
-			project: test.parent?.project()?.name ?? 'unknown',
+			file: relativePath,
+			project: projectName,
 			duration: result?.duration ?? 0,
 			status,
 			error: result?.error?.message,
-			tags: test.tags.length > 0 ? test.tags : undefined,
+			tags: testTags.length > 0 ? testTags : undefined,
 			// Playwright annotations: test.info().annotations or test.annotations
 			annotations:
 				test.annotations.length > 0 ? test.annotations : undefined,
-			artifacts: {},
+			attachmentPaths:
+				attachmentPaths.length > 0 ? attachmentPaths : undefined,
+			artifacts: {
+				trace: undefined,
+				screenshot: undefined,
+			},
 		};
 	}
 
@@ -219,33 +241,15 @@ class LocalHistoryReporter implements Reporter {
 	private async copyFailureArtifacts(failedTests: TestInfo[]) {
 		for (const failedTest of failedTests) {
 			try {
-				const testOutputDir = this.resolveTestOutputDir(failedTest);
+				const candidateFiles = await this.getArtifactCandidateFiles(
+					failedTest,
+				);
+				const baseName = this.sanitizeFilename(failedTest.title);
 
-				let files: string[];
-				try {
-					const entries = await fs.readdir(testOutputDir, {
-						recursive: true,
-					});
-					files = entries.map((e) => e.toString());
-				} catch {
-					// Test output directory doesn't exist — no artifacts to copy
-					continue;
-				}
+				for (const srcPath of candidateFiles) {
+					const fileName = path.basename(srcPath).toLowerCase();
 
-				for (const file of files) {
-					const srcPath = path.join(testOutputDir, file);
-
-					let stat: Awaited<ReturnType<typeof fs.stat>>;
-					try {
-						stat = await fs.stat(srcPath);
-					} catch {
-						continue;
-					}
-					if (!stat.isFile()) continue;
-
-					const baseName = this.sanitizeFilename(failedTest.title);
-
-					if (file.endsWith('trace.zip')) {
+					if (!failedTest.artifacts.trace && fileName.endsWith('trace.zip')) {
 						const destPath = path.join(
 							this.currentRunDir,
 							`${baseName}-trace.zip`,
@@ -255,19 +259,29 @@ class LocalHistoryReporter implements Reporter {
 							this.historyDir,
 							destPath,
 						);
-					} else if (
-						/\.(png|jpg|jpeg)$/i.test(file) &&
-						file.includes('screenshot')
-					) {
+						continue;
+					}
+
+					const isImage = /\.(png|jpg|jpeg)$/i.test(fileName);
+					const isFailureShot =
+						fileName.includes('screenshot') ||
+						fileName.includes('test-failed');
+
+					if (!failedTest.artifacts.screenshot && isImage && isFailureShot) {
+						const ext = path.extname(fileName) || '.png';
 						const destPath = path.join(
 							this.currentRunDir,
-							`${baseName}-screenshot.png`,
+							`${baseName}-screenshot${ext}`,
 						);
 						await fs.copyFile(srcPath, destPath);
 						failedTest.artifacts.screenshot = path.relative(
 							this.historyDir,
 							destPath,
 						);
+					}
+
+					if (failedTest.artifacts.trace && failedTest.artifacts.screenshot) {
+						break;
 					}
 				}
 			} catch (err) {
@@ -278,10 +292,71 @@ class LocalHistoryReporter implements Reporter {
 		}
 	}
 
+	private async getArtifactCandidateFiles(test: TestInfo): Promise<string[]> {
+		const files: string[] = [];
+		const seen = new Set<string>();
+
+		const addFile = async (filePath: string) => {
+			let stat: Awaited<ReturnType<typeof fs.stat>>;
+			try {
+				stat = await fs.stat(filePath);
+			} catch {
+				return;
+			}
+			if (!stat.isFile()) return;
+			if (seen.has(filePath)) return;
+			seen.add(filePath);
+			files.push(filePath);
+		};
+
+		for (const attachmentPath of test.attachmentPaths ?? []) {
+			await addFile(attachmentPath);
+		}
+
+		// Fallback to conventional Playwright output layout for environments
+		// where attachment paths are missing in reporter events.
+		const conventionalOutputDir = this.resolveTestOutputDir(test);
+		const fromDir = await this.listFilesRecursively(conventionalOutputDir);
+		for (const filePath of fromDir) {
+			if (!seen.has(filePath)) {
+				seen.add(filePath);
+				files.push(filePath);
+			}
+		}
+
+		return files;
+	}
+
+	private async listFilesRecursively(dir: string): Promise<string[]> {
+		let entries: import('node:fs').Dirent[];
+		try {
+			entries = await fs.readdir(dir, {
+				withFileTypes: true,
+				encoding: 'utf8',
+			});
+		} catch {
+			return [];
+		}
+
+		const files: string[] = [];
+		for (const entry of entries) {
+			const fullPath = path.join(dir, entry.name);
+			if (entry.isFile()) {
+				files.push(fullPath);
+				continue;
+			}
+			if (entry.isDirectory()) {
+				const nested = await this.listFilesRecursively(fullPath);
+				files.push(...nested);
+			}
+		}
+
+		return files;
+	}
+
 	/**
 	 * Resolves the Playwright-generated output folder for a specific test.
 	 * Playwright convention: test-results/{title-slug}-{project}/
-	 * Falls back to the project's configured outputDir if no match is found.
 	 */
 	private resolveTestOutputDir(test: TestInfo): string {
 		const slug = test.title
@@ -291,7 +366,6 @@ class LocalHistoryReporter implements Reporter {
 
 		const projectSlug = test.project.toLowerCase();
 
-		// Standard Playwright output dir layout
 		return path.join('test-results', `${slug}-${projectSlug}`);
 	}
 

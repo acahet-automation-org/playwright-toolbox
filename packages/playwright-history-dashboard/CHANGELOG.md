@@ -1,5 +1,13 @@
 # @acahet/playwright-history-dashboard
 
+## Unreleased
+
+### Patch Changes
+
+- Fixed reporter artifact discovery to prefer Playwright attachment paths and use a Node 18-safe recursive fallback.
+- Fixed screenshot capture detection to include `test-failed` image naming used by Playwright.
+- Fixed gallery/lightbox and artifact links to avoid HTML-encoding artifact paths in `src`, `href`, and `data-*` attributes.
+
 ## 3.0.5
 
 ### Patch Changes

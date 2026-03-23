@@ -1704,6 +1704,12 @@ function esc(str) {
   return d.innerHTML;
 }
 
+// Attribute-safe escaping for URL/path values.
+// Keep path bytes intact (no full HTML escaping) and only protect quotes.
+function escAttr(str) {
+  return String(str ?? '').replace(/"/g, '&quot;');
+}
+
 function fmtDate(ts) {
   return new Date(ts).toLocaleString(undefined, {
     month: 'short', day: 'numeric',
@@ -2204,9 +2210,12 @@ function renderGalleryPage() {
         </div>
         <div class="gallery-grid">
           ${shots.map(t => `
-            <div class="gallery-item" onclick="openLightbox('${esc(t.artifacts.screenshot)}','${esc(t.title)}')">
+            <div class="gallery-item"
+                 data-src="${escAttr(t.artifacts.screenshot)}"
+                 data-title="${escAttr(t.title)}"
+                 onclick="openLightbox(this.dataset.src, this.dataset.title)">
               <div class="gallery-img-wrap">
-                <img src="${esc(t.artifacts.screenshot)}" alt="${esc(t.title)}"
+                <img src="${escAttr(t.artifacts.screenshot)}" alt="${esc(t.title)}"
                      onerror="this.parentElement.innerHTML='<span class=\\'gallery-img-placeholder\\'>📷</span>'">
               </div>
               <div class="gallery-item-info">
@@ -2786,8 +2795,8 @@ function renderTestRows(tests, p75 = 0) {
           <div class="test-row-error" id="${errId}">${esc(t.error)}</div>` : ''}
         ${(t.artifacts?.trace || t.artifacts?.screenshot) ? `
           <div class="artifact-links">
-            ${t.artifacts.trace ? `<a href="${esc(t.artifacts.trace)}" download class="artifact-link">↓ trace</a>` : ''}
-            ${t.artifacts.screenshot ? `<a href="${esc(t.artifacts.screenshot)}" download class="artifact-link">↓ screenshot</a>` : ''}
+            ${t.artifacts.trace ? `<a href="${escAttr(t.artifacts.trace)}" download class="artifact-link">↓ trace</a>` : ''}
+            ${t.artifacts.screenshot ? `<a href="${escAttr(t.artifacts.screenshot)}" download class="artifact-link">↓ screenshot</a>` : ''}
           </div>` : ''}
       </div>
     </div>`;
