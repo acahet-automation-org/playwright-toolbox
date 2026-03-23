@@ -1,5 +1,18 @@
 # @acahet/playwright-history-dashboard
 
+## 3.0.5
+
+### Patch Changes
+
+- Fixed `pw-history-init` config loading across `pw-dashboard.config.js`, `.cjs`, and `.mjs`.
+- Fixed ESM project compatibility when reading dashboard config files.
+- Fixed dashboard template path resolution used by `pw-history-init`.
+- Fixed Windows CRLF handling during CONFIG injection into `index.html`.
+- Fixed CONFIG replacement to update the existing block instead of appending a duplicate block.
+- Improved init failure behavior with explicit errors when CONFIG block is missing.
+- Updated README with aligned `historyDir` guidance between `pw-dashboard.config.*` and Playwright reporter options.
+- Updated README troubleshooting and option docs for `projectName`, `brandName`, and `pageTitle`.
+
 ## 3.0.0
 
 ### Major Changes

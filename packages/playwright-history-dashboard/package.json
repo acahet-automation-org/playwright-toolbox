@@ -1,6 +1,6 @@
 {
   "name": "@acahet/playwright-history-dashboard",
-  "version": "3.0.1",
+  "version": "3.0.5",
   "description": "Self-hosted Playwright test history dashboard — custom reporter + single-file HTML dashboard. No SaaS, no subscriptions.",
   "keywords": [
     "playwright",
@@ -22,21 +22,22 @@
   },
   "license": "MIT",
   "author": "acahet",
-  "type": "module",
   "main": "./dist/src/reporter.js",
   "types": "./dist/src/reporter.d.ts",
   "exports": {
     ".": {
+      "require": "./dist/src/reporter.js",
       "import": "./dist/src/reporter.js",
       "types": "./dist/src/reporter.d.ts"
     },
     "./reporter": {
+      "require": "./dist/src/reporter.js",
       "import": "./dist/src/reporter.js",
       "types": "./dist/src/reporter.d.ts"
     }
   },
   "bin": {
-    "pw-history-init": "./dist/scripts/init.js"
+    "pw-history-init": "dist/scripts/init.js"
   },
   "files": [
     "dist/",
