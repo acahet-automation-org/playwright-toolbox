@@ -1,5 +1,11 @@
 # @acahet/playwright-history-dashboard
 
+## 3.1.0
+
+### Minor Changes
+
+- fix: artifact copying by preserving raw artifacts path
+
 ## Unreleased
 
 ### Patch Changes
