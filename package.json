@@ -1,7 +1,7 @@
 {
   "name": "playwright-toolbox",
-  "private": false,
-  "version": "1.0.0",
+  "private": true,
+  "version": "0.0.0",
   "description": "Workspace monorepo for Playwright packages",
   "workspaces": [
     "packages/*"
@@ -15,10 +15,13 @@
     "lint": "npm run --workspaces --if-present lint",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish"
+    "release": "npm run build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.8"
+    "@changesets/cli": "^2.27.8",
+    "install": "^0.13.0",
+    "npm": "^11.12.0",
+    "standard-version": "^9.5.0"
   },
   "engines": {
     "node": ">=18.0.0"

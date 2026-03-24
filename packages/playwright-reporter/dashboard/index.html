@@ -47,12 +47,11 @@
     /* ── Layout ─────────────────────────────────────────────── */
     .shell {
       display: grid;
-      grid-template-rows: 56px 1fr auto;
+      grid-template-rows: 56px 1fr;
       grid-template-columns: 220px 1fr;
       grid-template-areas:
-        "topbar  topbar"
-        "sidebar main"
-        "sidebar footer";
+        "topbar topbar"
+        "sidebar main";
       min-height: 100vh;
     }
 
@@ -1560,68 +1559,130 @@
       margin-top: 2px;
     }
 
-    /* Lightbox */
+    /* ── Lightbox ────────────────────────────────────────────── */
     .lightbox {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.85);
-      z-index: 100;
+      background: rgba(0,0,0,.88);
+      z-index: 1000;
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
     }
 
     .lightbox.open { display: flex; }
 
     .lightbox img {
-      max-width: 90vw;
-      max-height: 80vh;
+      max-width: 88vw;
+      max-height: 78vh;
       border-radius: var(--radius);
       object-fit: contain;
+      display: block;
     }
 
     .lightbox-title {
       font-family: var(--mono);
       font-size: 12px;
-      color: rgba(255,255,255,.7);
+      color: rgba(255,255,255,.65);
       text-align: center;
+      max-width: 80vw;
     }
 
     .lightbox-close {
-      position: fixed;
+      position: absolute;
       top: 20px;
       right: 24px;
-      background: none;
-      border: none;
-      color: rgba(255,255,255,.6);
-      font-size: 24px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.8);
+      font-size: 18px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
       line-height: 1;
     }
 
-    .lightbox-close:hover { color: #fff; }
-    /* ── Footer ─────────────────────────────────────────────── */
-    .footer {
-      grid-area: footer;
-      padding: 20px 28px;
-      border-top: 1px solid var(--border);
-      display: flex;
+    .lightbox-close:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+    /* ── Export button ───────────────────────────────────────── */
+    .export-btn {
+      display: none;
       align-items: center;
-      justify-content: space-between;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--muted);
       font-family: var(--mono);
       font-size: 11px;
-      color: var(--border2);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
     }
 
-    .footer a {
-      color: var(--border2);
-      text-decoration: none;
-      transition: color .15s;
-    }
+    .export-btn:hover { color: var(--text); border-color: var(--accent); background: rgba(91,124,246,.08); }
 
-    .footer a:hover { color: var(--muted); }
+    /* ── Print / PDF ─────────────────────────────────────────── */
+    #printReport { display: none; }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { background: #fff !important; color: #1a1a1a !important; font-family: Georgia, serif; }
+      .shell { display: block !important; }
+      .topbar, .sidebar, .footer, .export-btn,
+      .tab-group, .filter-banner, .lightbox,
+      #testDetail, #testView, .run-detail { display: none !important; }
+      .main { padding: 0 !important; }
+      #mainContent { display: none !important; }
+      #printReport { display: block !important; }
+
+      .pr-page { max-width: 780px; margin: 0 auto; padding: 32px 40px; }
+      .pr-header { background: #0f1117 !important; color: #fff !important; padding: 24px 28px; border-radius: 8px; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+      .pr-brand { font-family: monospace; font-size: 10px; color: #5b7cf6; text-transform: uppercase; letter-spacing: .08em; }
+      .pr-project { font-size: 20px; font-weight: 700; color: #fff; font-family: sans-serif; margin: 5px 0 3px; }
+      .pr-run-meta { font-size: 11px; color: #7b82a0; font-family: monospace; }
+      .pr-grade { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 18px; font-weight: 700; }
+      .pr-grade-A { background: rgba(45,212,160,.2); color: #2dd4a0; }
+      .pr-grade-B { background: rgba(91,124,246,.2); color: #7c9fff; }
+      .pr-grade-C { background: rgba(245,166,35,.2); color: #f5a623; }
+      .pr-grade-D, .pr-grade-F { background: rgba(242,95,92,.2); color: #f25f5c; }
+      .pr-section-title { font-family: sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #999; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 20px 0 10px; }
+      .pr-kpi-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+      .pr-kpi { background: #f8f9fa !important; border-radius: 6px; padding: 10px 12px; }
+      .pr-kpi-label { font-size: 9px; font-family: sans-serif; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 4px; }
+      .pr-kpi-value { font-size: 22px; font-weight: 700; font-family: monospace; line-height: 1; }
+      .pr-trend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+      .pr-trend-label { font-size: 10px; font-family: monospace; color: #666; width: 56px; }
+      .pr-trend-bg { flex: 1; height: 5px; background: #eee; border-radius: 3px; overflow: hidden; }
+      .pr-trend-fill { height: 100%; border-radius: 3px; }
+      .pr-trend-val { font-size: 10px; font-family: monospace; color: #999; width: 34px; text-align: right; }
+      .pr-failure-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid #f0f0f0; }
+      .pr-failure-row:last-child { border-bottom: none; }
+      .pr-failure-count { font-family: monospace; font-size: 12px; font-weight: 700; color: #c0392b; min-width: 26px; text-align: right; }
+      .pr-failure-bar-wrap { width: 70px; height: 4px; background: #eee; border-radius: 2px; overflow: hidden; }
+      .pr-failure-bar { height: 100%; background: #e74c3c; border-radius: 2px; }
+      .pr-failure-msg { font-family: monospace; font-size: 10px; color: #666; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pr-suite-title { font-family: sans-serif; font-size: 11px; font-weight: 600; color: #444; background: #f4f4f4 !important; padding: 5px 10px; border-radius: 4px; margin: 10px 0 4px; page-break-after: avoid; }
+      .pr-test-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; border-bottom: 0.5px solid #f5f5f5; font-family: sans-serif; font-size: 11px; page-break-inside: avoid; }
+      .pr-test-row:last-child { border-bottom: none; }
+      .pr-test-name { flex: 1; color: #333; }
+      .pr-test-dur { font-family: monospace; font-size: 10px; color: #aaa; margin: 0 10px; }
+      .pr-status { font-size: 9px; font-family: monospace; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+      .pr-s-pass  { background: #eaf8f2 !important; color: #0f6e56; }
+      .pr-s-fail  { background: #fef0f0 !important; color: #a32d2d; }
+      .pr-s-flaky { background: #fef9ec !important; color: #854f0b; }
+      .pr-s-skip  { background: #f5f5f5 !important; color: #888; }
+      .pr-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 9px; font-family: monospace; color: #ccc; }
+      @page { margin: 12mm 10mm; size: A4; }
+    }
   </style>
 </head>
 <body>
@@ -1634,11 +1695,17 @@
         <rect x="1" y="1" width="20" height="20" rx="5" stroke="#5b7cf6" stroke-width="1.5"/>
         <path d="M6 11l3.5 3.5L16 7" stroke="#5b7cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span id="brandName">pw_dashboard</span>
-      <span id="projectName" style="font-size:11px;font-weight:400;color:var(--muted);padding-left:8px;border-left:1px solid var(--border);margin-left:4px"></span>
+      pw_dashboard
     </div>
     <div class="topbar-meta" id="topbarMeta">loading…</div>
+    <button class="export-btn" id="exportBtn" onclick="exportPDF()">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Export PDF
+    </button>
   </header>
+
+  <!-- Hidden print report (populated by exportPDF(), visible only during print) -->
+  <div id="printReport"></div>
 
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
@@ -1673,11 +1740,11 @@
     </div>
   </nav>
 
-  <!-- Lightbox -->
+  <!-- Lightbox — click overlay to close, click img/title to stay open -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-    <img id="lightboxImg" src="" alt="">
-    <div class="lightbox-title" id="lightboxTitle"></div>
+    <button class="lightbox-close" onclick="event.stopPropagation();closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()">
+    <div class="lightbox-title" id="lightboxTitle" onclick="event.stopPropagation()"></div>
   </div>
 
   <!-- Main content -->
@@ -1704,11 +1771,8 @@ function esc(str) {
   return d.innerHTML;
 }
 
-// Attribute-safe escaping for URL/path values.
-// Keep path bytes intact (no full HTML escaping) and only protect quotes.
-function escAttr(str) {
-  return String(str ?? '').replace(/"/g, '&quot;');
-}
+// For use in src/href/data-* attributes — only escapes double-quotes, leaves path chars intact
+function safePath(p) { return (p ?? '').replace(/"/g, '&quot;'); }
 
 function fmtDate(ts) {
   return new Date(ts).toLocaleString(undefined, {
@@ -1849,6 +1913,8 @@ function render() {
   buildTestIndex();
   renderSidebar();
   renderSidebarFilters();
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) exportBtn.style.display = 'inline-flex';
   renderMainContent(latest, totalRuns, avgPass, latestRate);
 }
 
@@ -2178,9 +2244,15 @@ function renderGalleryPage() {
   const el = document.getElementById('galleryPage');
   if (!el) return;
 
-  // Collect all screenshots across all runs
+  const isImagePath = p => /\.(png|jpg|jpeg|webp)$/i.test(p);
+
+  // Support both artifacts.screenshot (old reporter) and attachmentPaths images (new reporter)
   const groups = runs.map(run => {
-    const shots = (run.allTests ?? []).filter(t => t.artifacts?.screenshot);
+    const shots = (run.allTests ?? []).flatMap(t => {
+      if (t.artifacts?.screenshot) return [{ src: t.artifacts.screenshot, t }];
+      const fromAttachments = (t.attachmentPaths ?? []).filter(isImagePath);
+      return fromAttachments.length ? [{ src: fromAttachments[0], t }] : [];
+    });
     return { run, shots };
   }).filter(g => g.shots.length > 0);
 
@@ -2209,13 +2281,10 @@ function renderGalleryPage() {
           <span class="gallery-run-count">${shots.length} screenshot${shots.length!==1?'s':''}</span>
         </div>
         <div class="gallery-grid">
-          ${shots.map(t => `
-            <div class="gallery-item"
-                 data-src="${escAttr(t.artifacts.screenshot)}"
-                 data-title="${escAttr(t.title)}"
-                 onclick="openLightbox(this.dataset.src, this.dataset.title)">
+          ${shots.map(({ src, t }) => `
+            <div class="gallery-item" data-src="${safePath(src)}" data-title="${esc(t.title)}">
               <div class="gallery-img-wrap">
-                <img src="${escAttr(t.artifacts.screenshot)}" alt="${esc(t.title)}"
+                <img src="${safePath(src)}" alt="${esc(t.title)}"
                      onerror="this.parentElement.innerHTML='<span class=\\'gallery-img-placeholder\\'>📷</span>'">
               </div>
               <div class="gallery-item-info">
@@ -2225,22 +2294,137 @@ function renderGalleryPage() {
             </div>`).join('')}
         </div>
       </div>`).join('')}`;
+
+  // Event delegation — no inline onclick with interpolated paths
+  el.onclick = function(e) {
+    const card = e.target.closest('.gallery-item');
+    if (!card) return;
+    if (card.dataset.src) openLightbox(card.dataset.src, card.dataset.title || '');
+  };
 }
 
 window.openLightbox = function(src, title) {
-  document.getElementById('lightboxImg').src = src;
-  document.getElementById('lightboxTitle').textContent = title;
-  document.getElementById('lightbox').classList.add('open');
+  const img = document.getElementById('lightboxImg');
+  const lbl = document.getElementById('lightboxTitle');
+  const lb  = document.getElementById('lightbox');
+  if (!img || !lb) return;
+  img.src = src;
+  img.alt = title;
+  if (lbl) lbl.textContent = title;
+  lb.classList.add('open');
 };
 
 window.closeLightbox = function() {
-  document.getElementById('lightbox').classList.remove('open');
-  document.getElementById('lightboxImg').src = '';
+  const lb  = document.getElementById('lightbox');
+  const img = document.getElementById('lightboxImg');
+  if (lb)  lb.classList.remove('open');
+  if (img) img.src = '';
 };
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeLightbox();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ── PDF export ─────────────────────────────────────────────────────────────
+function buildRecurringFailures() {
+  const counts = new Map();
+  runs.forEach(run => {
+    (run.allTests ?? []).filter(t => t.status === 'failed' || t.status === 'flaky').forEach(t => {
+      if (!t.error) return;
+      const key = t.error.split('\n')[0].replace(/\d+/g,'N').replace(/'.+?'/g,"'…'").replace(/".+?"/g,'"…"').trim().substring(0, 72);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+  });
+  return [...counts.entries()].sort((a,b) => b[1]-a[1]).slice(0, 8).map(([label, cnt]) => ({ label, cnt }));
+}
+
+function buildPrintReport() {
+  const latest      = runs[0];
+  const projectName = document.getElementById('projectName')?.textContent || CONFIG.projectName || CONFIG.brandName;
+  const grade       = computeGrade(latest);
+  const latestRate  = latest.totalTests > 0 ? (latest.passed / latest.totalTests * 100).toFixed(1) : '0';
+  const allT        = latest.allTests ?? [];
+  const failures    = buildRecurringFailures();
+  const maxCnt      = failures[0]?.cnt ?? 1;
+  const trendRuns   = runs.slice(0, 7).reverse();
+
+  const suites = new Map();
+  allT.forEach(t => {
+    const suite = t.file?.split('/').pop()?.replace(/\.spec\.(ts|js)$/, '') ?? 'Tests';
+    if (!suites.has(suite)) suites.set(suite, []);
+    suites.get(suite).push(t);
+  });
+
+  const sc = s => ({ passed:'pr-s-pass', failed:'pr-s-fail', flaky:'pr-s-flaky', skipped:'pr-s-skip' }[s] ?? 'pr-s-skip');
+
+  return `
+    <div class="pr-page">
+      <div class="pr-header">
+        <div>
+          <div class="pr-brand">${esc(CONFIG.brandName)} · test report</div>
+          <div class="pr-project">${esc(projectName)}</div>
+          <div class="pr-run-meta">Run ${esc(latest.runId ?? '')} · ${fmtDate(latest.timestamp)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="text-align:right">
+            <div style="font-size:20px;font-weight:700;color:#fff;font-family:monospace">${latestRate}%</div>
+            <div style="font-size:10px;color:#7b82a0;font-family:monospace">pass rate</div>
+          </div>
+          <div class="pr-grade pr-grade-${grade}">${grade}</div>
+        </div>
+      </div>
+
+      <div class="pr-section-title">Run summary</div>
+      <div class="pr-kpi-row">
+        <div class="pr-kpi"><div class="pr-kpi-label">Passed</div><div class="pr-kpi-value" style="color:#0f6e56">${latest.passed}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Failed</div><div class="pr-kpi-value" style="color:#a32d2d">${latest.failed}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Flaky</div><div class="pr-kpi-value" style="color:#854f0b">${latest.flaky ?? 0}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Skipped</div><div class="pr-kpi-value" style="color:#888">${latest.skipped}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Duration</div><div class="pr-kpi-value" style="color:#185fa5;font-size:16px">${fmtDur(latest.duration)}</div></div>
+      </div>
+
+      <div class="pr-section-title">Pass rate trend · last ${trendRuns.length} runs</div>
+      ${trendRuns.map(r => {
+        const rate = r.totalTests > 0 ? (r.passed / r.totalTests * 100) : 0;
+        const col  = rate >= 80 ? '#2dd4a0' : rate >= 50 ? '#f5a623' : '#f25f5c';
+        return `<div class="pr-trend-row">
+          <div class="pr-trend-label">${fmtDate(r.timestamp).split(',')[0]}</div>
+          <div class="pr-trend-bg"><div class="pr-trend-fill" style="width:${rate.toFixed(0)}%;background:${col}"></div></div>
+          <div class="pr-trend-val">${rate.toFixed(0)}%</div>
+        </div>`;
+      }).join('')}
+
+      ${failures.length ? `
+        <div class="pr-section-title">Recurring failures</div>
+        ${failures.map(({ label, cnt }) => `
+          <div class="pr-failure-row">
+            <div class="pr-failure-count">${cnt}×</div>
+            <div class="pr-failure-bar-wrap"><div class="pr-failure-bar" style="width:${(cnt/maxCnt*100).toFixed(0)}%"></div></div>
+            <div class="pr-failure-msg">${esc(label)}</div>
+          </div>`).join('')}` : ''}
+
+      <div class="pr-section-title">Test results by suite</div>
+      ${[...suites.entries()].map(([suite, tests]) => `
+        <div class="pr-suite-title">${esc(suite)}</div>
+        ${tests.map(t => `
+          <div class="pr-test-row">
+            <span class="pr-test-name">${esc(t.title)}</span>
+            <span class="pr-test-dur">${fmtDur(t.duration)}</span>
+            <span class="pr-status ${sc(t.status)}">${t.status}</span>
+          </div>`).join('')}`).join('')}
+
+      <div class="pr-footer">
+        <span>generated by ${esc(CONFIG.brandName)} · acahet</span>
+        <span>${esc(latest.runId ?? '')}</span>
+      </div>
+    </div>`;
+}
+
+window.exportPDF = function() {
+  if (!runs.length) return;
+  const el = document.getElementById('printReport');
+  if (!el) return;
+  el.innerHTML = buildPrintReport();
+  window.print();
+};
 
 window.jumpToRun = function(idx) {
   // Highlight sidebar item
@@ -2795,8 +2979,8 @@ function renderTestRows(tests, p75 = 0) {
           <div class="test-row-error" id="${errId}">${esc(t.error)}</div>` : ''}
         ${(t.artifacts?.trace || t.artifacts?.screenshot) ? `
           <div class="artifact-links">
-            ${t.artifacts.trace ? `<a href="${escAttr(t.artifacts.trace)}" download class="artifact-link">↓ trace</a>` : ''}
-            ${t.artifacts.screenshot ? `<a href="${escAttr(t.artifacts.screenshot)}" download class="artifact-link">↓ screenshot</a>` : ''}
+            ${t.artifacts.trace      ? `<a href="${safePath(t.artifacts.trace)}"      download class="artifact-link">↓ trace</a>`      : ''}
+            ${t.artifacts.screenshot ? `<a href="${safePath(t.artifacts.screenshot)}" download class="artifact-link">↓ screenshot</a>` : ''}
           </div>` : ''}
       </div>
     </div>`;
