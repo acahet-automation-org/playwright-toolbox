@@ -1,7 +1,0 @@
----
-"@acahet/playwright-configs": patch
-"@acahet/playwright-reporter": patch
-"@acahet/playwright-rules": patch
----
-
-initial release
