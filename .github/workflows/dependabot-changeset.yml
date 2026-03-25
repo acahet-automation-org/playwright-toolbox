@@ -1,0 +1,33 @@
+name: Dependabot Changeset Helper
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+
+jobs:
+  add-changeset:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Dummy Changeset
+        run: |
+          mkdir -p .changeset
+          echo "---
+          '@acahet/playwright-configs': patch
+          '@acahet/playwright-reporter': patch
+          '@acahet/playwright-rules': patch
+          ---
+          chore(deps): automated dependency update" > .changeset/dependabot-${{ github.event.pull_request.number }}.md
+          
+      - name: Commit Changeset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .changeset/*.md
+          git commit -m "chore: add changeset for dependabot update"
+          git push

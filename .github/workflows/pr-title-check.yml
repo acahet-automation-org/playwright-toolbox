@@ -1,0 +1,14 @@
+name: 'Check PR Title'
+
+on:
+    pull_request:
+        types: [opened, edited, synchronize, reopened]
+
+permissions:
+    contents: read
+    pull-requests: read
+
+jobs:
+    lint-pr-title:
+        uses: acahet/shared-workflows/.github/workflows/pr-title-check.yml@main
+        secrets: inherit
