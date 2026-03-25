@@ -1,18 +1,18 @@
-# @acahet/playwright-config
+# @acahet/playwright-configs
 
 Shared Playwright config presets package.
 
 ## Install
 
 ```bash
-npm i -D @acahet/playwright-config
+npm i -D @acahet/playwright-configs
 ```
 
 ## Usage
 
 ```ts
 import { defineConfig } from '@playwright/test';
-import * as preset from '@acahet/playwright-config';
+import * as preset from '@acahet/playwright-configs';
 
 export default defineConfig({
 	...preset,

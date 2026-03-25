@@ -47,4 +47,4 @@ export default [
 import * as configPreset from '@acahet/pw-standard/playwright';
 ```
 
-New projects should import Playwright config presets from `@acahet/playwright-config` directly.
+New projects should import Playwright config presets from `@acahet/playwright-configs` directly.
