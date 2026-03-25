@@ -1,11 +1,11 @@
 /**
- * @acahet/playwright-config
+ * @acahet/playwright-configs
  *
  * Shared Playwright config presets.
  *
  * Usage in a consuming project's playwright.config.ts:
  *
- *   import { baseConfig } from '@acahet/playwright-config';
+ *   import { baseConfig } from '@acahet/playwright-configs';
  *   import { defineConfig } from '@playwright/test';
  *
  *   export default defineConfig({
@@ -18,4 +18,4 @@
 // export { baseConfig } from './base.config';
 // export { ciConfig }   from './ci.config';
 
-export {};
+export { };

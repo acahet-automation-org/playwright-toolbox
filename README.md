@@ -3,7 +3,7 @@
 This repository is an npm workspaces monorepo with three independent packages:
 
 1. `@acahet/pw-standard`
-2. `@acahet/playwright-config`
+2. `@acahet/playwright-configs`
 3. `@acahet/playwright-history-dashboard`
 
 ## Workspace layout
@@ -22,12 +22,12 @@ Use for Playwright ESLint rules, base abstractions, and tsconfig presets.
 npm i -D @acahet/pw-standard
 ```
 
-### 2) @acahet/playwright-config
+### 2) @acahet/playwright-configs
 
 Use for extracted Playwright config presets.
 
 ```bash
-npm i -D @acahet/playwright-config
+npm i -D @acahet/playwright-configs
 ```
 
 ### 3) @acahet/playwright-history-dashboard
@@ -70,7 +70,7 @@ npm run release
 ### Import migration
 
 -   Previous: `@acahet/pw-standard/playwright`
--   New preferred: `@acahet/playwright-config`
+-   New preferred: `@acahet/playwright-configs`
 -   Compatibility: `@acahet/pw-standard/playwright` is still re-exported for transition safety.
 
 ### Folder migration

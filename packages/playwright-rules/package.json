@@ -59,9 +59,8 @@
     "directory": "packages/playwright-rules"
   },
   "peerDependencies": {
-    "eslint": ">=8.0.0",
-    "@playwright/test": ">=1.40.0",
-    "@acahet/playwright-config": ">=1.2.0"
+    "@acahet/playwright-configs": ">=0.0.2",
+    "@playwright/test": ">=1.40.0"
   },
   "peerDependenciesMeta": {
     "@playwright/test": {
@@ -73,9 +72,9 @@
     "@types/eslint": "^8.56.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint": "^10.1.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
