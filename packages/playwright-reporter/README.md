@@ -24,10 +24,10 @@ export default defineConfig({
 			'@acahet/playwright-reporter/reporter',
 			{
 				historyDir: 'dashboard/test-history', // where to write dashboard files
-				projectName: 'PW-UI-API',
-				brandName: 'ACAHET DASHBOARD',
-				pageTitle: 'Reporter',
-				maxRuns: 30, // optional, default is 30
+				projectName: 'your project name',
+				brandName: 'your brand name',
+				pageTitle: 'your title',
+				maxRuns: 10, // optional, default is 30
 			},
 		],
 	],
