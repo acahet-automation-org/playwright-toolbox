@@ -1,6 +1,6 @@
 # @acahet/playwright-reporter
 
-A self-hosted Playwright test history dashboard — no SaaS, no subscriptions, no external services. A custom reporter writes a local JSON index after every run, and a single-file HTML dashboard reads it directly from disk.
+A self-hosted Playwright test history dashboard — no SaaS, no subscriptions, no external services. A custom reporter writes a local JSON index and regenerates the dashboard HTML after every run, so everything stays in sync automatically.
 
 In this workspace, the package source is located at `packages/playwright-reporter`.
 
@@ -12,61 +12,7 @@ npm install -D @acahet/playwright-reporter
 
 ## Quick start
 
-### 1. Configure (optional but recommended)
-
-Create one of these in your project root:
-
-- `pw-dashboard.config.js`
-- `pw-dashboard.config.cjs` (recommended if your project uses `"type": "module"`)
-- `pw-dashboard.config.mjs`
-- `pw_dashboard.config.js` (legacy underscore alias)
-
-> `pw-dashboard.config.ts` and `pw_dashboard.config.ts` are not supported for `pw-history-init`.
-
-```js
-// pw-dashboard.config.js
-module.exports = {
-	projectName: 'Acme E2E', // shown in topbar and footer
-	brandName: 'pw_dashboard', // top-left brand label
-	pageTitle: 'Acme Test Dashboard', // browser tab title
-	historyDir: 'dashboard/test-history', // must match playwright.config.ts
-	maxRuns: 30, // optional, default is 30
-};
-```
-
-A starter config file is included in the package at `pw-dashboard.config.js`.
-
-> You can also keep all settings in `playwright.config.*` reporter options (one place):
->
-> ```ts
-> reporter: [
->   ['html'],
->   ['@acahet/playwright-reporter/reporter', {
->     historyDir: 'dashboard/test-history',
->     projectName: 'Acme E2E',
->     brandName: 'Acme Dashboard',
->     pageTitle: 'Acme Test Dashboard',
->   }],
-> ],
-> ```
->
-> Then `npx pw-history-init` will infer these values as fallback if no `pw-dashboard.config.*` exists.
->
-### 2. Generate the dashboard
-
-```bash
-npx pw-history-init
-```
-
-Or when using a config path outside standard names:
-
-```bash
-npx pw-history-init --playwright-config=playwright.config.ts --dashboard-config=pw-dashboard.config.js
-```
-
-Reads your config file, injects your settings, and writes `index.html` into `historyDir`. Re-run after upgrading the package to pick up dashboard updates; your config is always preserved.
-
-### 3. Register the reporter in `playwright.config.ts`
+### 1. Register the reporter in `playwright.config.ts`
 
 ```ts
 import { defineConfig } from '@playwright/test';
@@ -77,7 +23,7 @@ export default defineConfig({
 		[
 			'@acahet/playwright-reporter/reporter',
 			{
-				historyDir: 'dashboard/test-history', // must match pw-dashboard.config.*
+				historyDir: 'dashboard/test-history', // where to write dashboard files
 				projectName: 'PW-UI-API',
 				brandName: 'ACAHET DASHBOARD',
 				pageTitle: 'Reporter',
@@ -92,28 +38,19 @@ export default defineConfig({
 });
 ```
 
-Important: `pw-history-init` uses `pw-dashboard.config.*` to generate `index.html`. In addition, if you don’t have a dashboard config file, `pw-history-init` now falls back to reporter options found in `playwright.config.*` (projectName, brandName, pageTitle, historyDir). Keep `historyDir` identical between settings to avoid stale data.
-
-> Note: `pw-history-init` only builds the dashboard UI. You must run `npx playwright test` to produce test run data (`history-index.json` + `runs/<run-id>`) that the dashboard visualizes.
->
-> This README is included in the published npm package (`node_modules/@acahet/playwright-reporter/README.md`), so consumers can read this flow in installation docs.
-
-### 4. Run tests and serve the dashboard
+### 2. Run tests and serve the dashboard
 
 ```bash
 npx playwright test
-# Install serve if missing:
-# npm install -D serve
-# or npm install -g serve
-# then point to your configured historyDir:
-# npx serve dashboard/test-history
-# or npx serve tests/report/test-history
 npx serve <your historyDir>
+# e.g. npx serve dashboard/test-history
 ```
 
 Open `http://localhost:3000` — the dashboard always shows the latest run.
 
-> ⚠️ If your dashboard appears stale, re-run `npx pw-history-init` and confirm your `historyDir` is the same in both `pw-dashboard.config.*` and `playwright.config.*`.
+After every `npx playwright test`, the reporter automatically:
+- Updates `history-index.json` with the new run
+- Regenerates `index.html` with your current config injected
 
 ---
 
@@ -128,6 +65,7 @@ Open `http://localhost:3000` — the dashboard always shows the latest run.
 - Copies failure artifacts (trace + screenshot) into a per-run directory scoped to the specific failing test
 - Retains the last **N runs** (default 30) as the single retention policy — index and disk stay in sync
 - Orphan guard removes any run directories not referenced in the index
+- Regenerates `index.html` with injected config after every run
 - Error boundary in `onEnd` — reporter failures never affect test exit codes
 - Skips `setup` project tests
 - Requires Playwright ≥ 1.42
@@ -178,27 +116,23 @@ Open `http://localhost:3000` — the dashboard always shows the latest run.
 
 ## Options
 
-| Option        | Type     | Default                         | Description                                             |
-| ------------- | -------- | ------------------------------- | ------------------------------------------------------- |
-| `projectName` | `string` | `''`                            | Label shown in topbar/footer                            |
-| `brandName`   | `string` | `'pw_dashboard'`               | Brand label shown in top-left                           |
-| `pageTitle`   | `string` | `'Test History Dashboard'`      | Browser tab title                                      |
-| `historyDir`  | `string` | `'./tests/report/test-history'` | Where to write/read dashboard files and run history     |
-| `maxRuns`     | `number` | `30`                            | How many runs to keep in the index and on disk          |
+| Option        | Type     | Default                           | Description                                         |
+| ------------- | -------- | --------------------------------- | --------------------------------------------------- |
+| `projectName` | `string` | `''`                              | Label shown in topbar/footer                        |
+| `brandName`   | `string` | `'pw_dashboard'`                  | Brand label shown in top-left                       |
+| `pageTitle`   | `string` | `'Test History Dashboard'`        | Browser tab title                                   |
+| `historyDir`  | `string` | `'./dashboard/test-history'`      | Where to write/read dashboard files and run history |
+| `maxRuns`     | `number` | `30`                              | How many runs to keep in the index and on disk      |
 
-Notes:
-
-- `projectName`, `brandName`, and `pageTitle` are applied to `index.html` by `npx pw-history-init`.
-- `historyDir` and `maxRuns` should be set in both `pw-dashboard.config.*` and reporter options for consistent behavior.
+All options are set directly in `playwright.config.ts` reporter options.
 
 ---
 
 ## Troubleshooting
 
-- `history-index.json` is missing: run `npx playwright test` at least once. `npx pw-history-init` only generates `index.html`.
-- Config ignored in module projects: use `pw-dashboard.config.cjs` instead of `.js` with `module.exports`.
-- Values not updated in `index.html`: re-run `npx pw-history-init` after upgrading the package.
-- Dashboard loads but shows no data: ensure `historyDir` is exactly the same in both config files.
+- `history-index.json` is missing: run `npx playwright test` at least once.
+- `index.html` missing or stale: run `npx playwright test` — the reporter regenerates it after every run.
+- Dashboard loads but shows no data: ensure `historyDir` in your reporter options points to the same directory you're serving.
 
 ---
 
@@ -251,8 +185,8 @@ To detach: delete the service config, remove the package. Zero changes to tests.
 ```
 your-project/
 └── <historyDir>/
-	├── index.html              ← generated by pw-history-init
-	├── history-index.json      ← generated by reporter after test runs
+	├── index.html              ← generated by reporter after every run
+	├── history-index.json      ← generated by reporter after every run
 	└── runs/
 		└── <run-id>/
 			├── <test>-trace.zip
