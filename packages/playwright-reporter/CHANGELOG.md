@@ -1,5 +1,11 @@
 # @acahet/playwright-reporter
 
+## 0.1.1
+
+### Patch Changes
+
+- 74c8972: dependencies
+
 ## 0.1.0
 
 ### Minor Changes

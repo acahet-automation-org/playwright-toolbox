@@ -1,6 +1,6 @@
 {
   "name": "@acahet/playwright-reporter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Self-hosted Playwright test history dashboard — custom reporter + single-file HTML dashboard. No SaaS, no subscriptions.",
   "main": "dist/src/reporter.js",
   "types": "dist/src/reporter.d.ts",
