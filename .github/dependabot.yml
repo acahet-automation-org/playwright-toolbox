@@ -4,6 +4,7 @@ updates:
     directory: "/" # root package.json
     schedule:
       interval: "weekly"
+      day: "monday"
     groups:
       playwright-dependencies:
         patterns:
@@ -17,6 +18,7 @@ updates:
     directory: "/packages/playwright-configs"
     schedule:
       interval: "weekly"
+      day: "monday"
     groups:
       playwright-dependencies:
         patterns:
@@ -30,6 +32,7 @@ updates:
     directory: "/packages/playwright-reporter"
     schedule:
       interval: "weekly"
+      day: "monday"
     groups:
       playwright-dependencies:
         patterns:
@@ -43,6 +46,7 @@ updates:
     directory: "/packages/playwright-rules"
     schedule:
       interval: "weekly"
+      day: "monday"
     groups:
       playwright-dependencies:
         patterns:

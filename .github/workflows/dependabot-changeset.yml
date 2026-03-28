@@ -1,12 +1,14 @@
 name: Dependabot Changeset Helper
+permissions:
+  contents: write
 on:
-  pull_request_target:
-    types: [opened, synchronize]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 1 * *"  # 1st day of month 00:00 UTC
 
 jobs:
   add-changeset:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v6
@@ -17,13 +19,31 @@ jobs:
       - name: Create Dummy Changeset
         run: |
           mkdir -p .changeset
-          echo "---
-          '@acahet/playwright-configs': patch
-          '@acahet/playwright-reporter': patch
-          '@acahet/playwright-rules': patch
+          CHANGESET_ID=${{ github.run_id }}
+          CHANGES=$(node - <<'NODE'
+          const { readdirSync, statSync, readFileSync } = require('fs');
+          const { join } = require('path');
+          const pkgs = readdirSync('packages').filter((p) => statSync(join('packages', p)).isDirectory());
+          const names = pkgs
+            .map((pkg) => {
+              const pkgJson = JSON.parse(readFileSync(join('packages', pkg, 'package.json'), 'utf8'));
+              return pkgJson.name;
+            })
+            .filter(Boolean);
+          if (!names.length) {
+            process.exit(1);
+          }
+          console.log(names.map((name) => `'${name}': patch`).join('\n'));
+          NODE
+          )
+
+          cat > .changeset/dependabot-${CHANGESET_ID}.md <<'EOF'
           ---
-          chore(deps): automated dependency update" > .changeset/dependabot-${{ github.event.pull_request.number }}.md
-          
+          $CHANGES
+          ---
+          chore(deps): automated dependency update
+          EOF
+
       - name: Commit Changeset
         run: |
           git config user.name "github-actions[bot]"
