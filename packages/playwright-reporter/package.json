@@ -1,34 +1,30 @@
 {
   "name": "@acahet/playwright-reporter",
-  "version": "0.1.1",
-  "description": "Self-hosted Playwright test history dashboard — custom reporter + single-file HTML dashboard. No SaaS, no subscriptions.",
+  "version": "0.1.2",
   "main": "dist/src/reporter.js",
+  "description": "Self-hosted Playwright test history dashboard — custom reporter + single-file HTML dashboard. No SaaS, no subscriptions.",
   "types": "dist/src/reporter.d.ts",
   "exports": {
-    "./reporter": {
-      "require": "./dist/src/reporter.js",
-      "import": "./dist/src/reporter.js",
-      "types": "./dist/src/reporter.d.ts"
-    }
-  },
-  "files": [
-    "dist/",
-    "dashboard/"
-  ],
-  "dependencies": {
-    "serve": "^14.2.0"
+    ".": "./dist/src/reporter.js",
+    "./reporter": "./dist/src/reporter.js"
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "build:watch": "tsc --project tsconfig.json --watch",
     "prepublishOnly": "npm run build"
   },
-  "peerDependencies": {
-    "@playwright/test": ">=1.42.0"
-  },
+  "files": [
+    "dist/",
+    "dashboard/"
+  ],
+  "dependencies": {},
   "devDependencies": {
     "@playwright/test": "^1.42.0",
+    "serve": "^14.2.0",
     "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.42.0"
   },
   "keywords": [
     "playwright",

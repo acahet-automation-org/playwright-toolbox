@@ -1,5 +1,11 @@
 # @acahet/playwright-reporter
 
+## 0.1.2
+
+### Patch Changes
+
+- 6b543eb: remove serve from depencies
+
 ## 0.1.1
 
 ### Patch Changes
