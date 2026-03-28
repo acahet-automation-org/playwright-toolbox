@@ -4,13 +4,13 @@ This repository is an npm workspaces monorepo with three independent packages:
 
 1. `@acahet/pw-standard`
 2. `@acahet/playwright-configs`
-3. `@acahet/playwright-history-dashboard`
+3. `@acahet/playwright-reporter`
 
 ## Workspace layout
 
 -   `packages/pw-standard`
 -   `packages/playwright-config`
--   `packages/playwright-history-dashboard`
+-   `packages/playwright-reporter`
 
 ## Package usage
 
@@ -30,19 +30,19 @@ Use for extracted Playwright config presets.
 npm i -D @acahet/playwright-configs
 ```
 
-### 3) @acahet/playwright-history-dashboard
+### 3) @acahet/playwright-reporter
 
-Use for local run history tracking and static dashboard visualization.
+Use for local run history tracking and static dashboard visualization (custom reporter + dashboard).
 
 ```bash
-npm i -D @acahet/playwright-history-dashboard
+npm i -D @acahet/playwright-reporter
 ```
 
 See package-specific docs:
 
 -   `packages/pw-standard/README.md`
 -   `packages/playwright-config/README.md`
--   `packages/playwright-history-dashboard/README.md`
+-   `packages/playwright-reporter/README.md`
 
 ## Local development
 
@@ -81,8 +81,8 @@ npm run release
 -   Previous rules tests: `playwright-rules/tests`
 -   New rules tests: `packages/pw-standard/tests`
 
--   Previous dashboard folder: `playwright-history-dashboard/`
--   New dashboard folder: `packages/playwright-history-dashboard/`
+-   Previous dashboard folder: `playwright-reporter/`
+-   New dashboard folder: `packages/playwright-reporter/`
 
 ### Release migration
 

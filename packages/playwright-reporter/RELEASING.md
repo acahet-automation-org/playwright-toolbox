@@ -23,7 +23,7 @@ Before starting, make sure you have:
 
 Package location in this workspace:
 
-- `package/packages/playwright-history-dashboard`
+- `packages/playwright-reporter`
 
 ---
 
@@ -32,7 +32,7 @@ Package location in this workspace:
 Run all commands from:
 
 ```bash
-cd /Users/andersoncahet/Documents/studies/package/packages/playwright-history-dashboard
+cd /Users/andersoncahet/Documents/studies/package/packages/playwright-reporter
 ```
 
 ### Step A: Update version
@@ -56,7 +56,7 @@ npm pack
 
 This creates a tarball like:
 
-- `acahet-playwright-history-dashboard-0.1.1.tgz`
+- `acahet-playwright-reporter-0.1.1.tgz`
 
 ### Step C: Local test in consumer project (recommended)
 
@@ -64,7 +64,7 @@ Install tarball in `pw_ui_api`:
 
 ```bash
 cd /Users/andersoncahet/Documents/studies/pw_ui_api
-npm i -D ../package/packages/playwright-history-dashboard/acahet-playwright-history-dashboard-0.1.1.tgz
+npm i -D ../package/packages/playwright-reporter/acahet-playwright-reporter-0.1.1.tgz
 ```
 
 Update reporter in `playwright.config.ts` to use package reporter export:
@@ -73,7 +73,7 @@ Update reporter in `playwright.config.ts` to use package reporter export:
 reporter: [
 	['html', { outputFolder: playwrightReportDir }],
 	[
-		'@acahet/playwright-history-dashboard/reporter',
+		['@acahet/playwright-reporter/reporter'],
 		{
 			historyDir: 'tests/report/test-history',
 			maxRuns: 30,
@@ -105,14 +105,14 @@ Validation checklist:
 After local validation:
 
 ```bash
-cd /Users/andersoncahet/Documents/studies/package/packages/playwright-history-dashboard
+cd /Users/andersoncahet/Documents/studies/package/packages/playwright-reporter
 npm publish --access public
 ```
 
 Verify:
 
 ```bash
-npm view @acahet/playwright-history-dashboard version
+npm view @acahet/playwright-reporter version
 ```
 
 ---
@@ -122,7 +122,7 @@ npm view @acahet/playwright-history-dashboard version
 From package repository folder:
 
 ```bash
-cd /Users/andersoncahet/Documents/studies/package/packages/playwright-history-dashboard
+cd /Users/andersoncahet/Documents/studies/package/packages/playwright-reporter
 git status
 git add .
 git commit -m "chore: release v0.1.1"
@@ -148,8 +148,8 @@ GitHub Packages requires package scope to match the owner namespace.
 
 Examples:
 
-- Owner `acahet` -> `@acahet/playwright-history-dashboard`
-- Owner `acahet-automation-org` -> `@acahet-automation-org/playwright-history-dashboard`
+- Owner `acahet` -> `@acahet/playwright-reporter`
+- Owner `acahet-automation-org` -> `@acahet-automation-org/playwright-reporter`
 
 If owner differs from current scope, update `name` in `package.json` before publishing to GitHub Packages.
 
@@ -178,7 +178,7 @@ After publishing, test by installing from registry in `pw_ui_api`:
 
 ```bash
 cd /Users/andersoncahet/Documents/studies/pw_ui_api
-npm i -D @acahet/playwright-history-dashboard@latest
+npm i -D @acahet/playwright-reporter@latest
 ```
 
 Run:
@@ -227,7 +227,7 @@ npm install
 
 ### Reporter not loading
 
-- Use export path: `@acahet/playwright-history-dashboard/reporter`
+- Use export path: `@acahet/playwright-reporter/reporter`
 - Confirm `playwright.config.ts` reporter array syntax
 
 ---
@@ -243,7 +243,7 @@ npm run build && npm pack
 In consumer folder:
 
 ```bash
-npm i -D ../package/packages/playwright-history-dashboard/acahet-playwright-history-dashboard-0.1.1.tgz && npx pw-history-init && npx playwright test --project ui-tests
+npm i -D ../package/packages/playwright-reporter/acahet-playwright-reporter-0.1.1.tgz && npx pw-history-init && npx playwright test --project ui-tests
 ```
 
 If these pass, you are ready to publish.

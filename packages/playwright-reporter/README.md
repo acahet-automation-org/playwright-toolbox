@@ -1,13 +1,13 @@
-# @acahet/playwright-history-dashboard
+# @acahet/playwright-reporter
 
 A self-hosted Playwright test history dashboard — no SaaS, no subscriptions, no external services. A custom reporter writes a local JSON index after every run, and a single-file HTML dashboard reads it directly from disk.
 
-In this workspace, the package source is located at `packages/playwright-history-dashboard`.
+In this workspace, the package source is located at `packages/playwright-reporter`.
 
 ## Install
 
 ```bash
-npm install -D @acahet/playwright-history-dashboard
+npm install -D @acahet/playwright-reporter
 ```
 
 ## Quick start
@@ -51,7 +51,7 @@ export default defineConfig({
 	reporter: [
 		['html'],
 		[
-			'@acahet/playwright-history-dashboard/reporter',
+			'@acahet/playwright-reporter/reporter',
 			{
 				historyDir: 'dashboard/test-history', // must match pw-dashboard.config.*
 				maxRuns: 30, // optional, default is 30
@@ -196,7 +196,7 @@ export default defineConfig(baseConfig, getServiceConfig(baseConfig), {
 	reporter: [
 		['list'],
 		['@azure/microsoft-playwright-testing/reporter'],
-		['@acahet/playwright-history-dashboard'],
+		['@acahet/playwright-reporter'],
 	],
 });
 ```
