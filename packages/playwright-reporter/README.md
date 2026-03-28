@@ -21,6 +21,8 @@ Create one of these in your project root:
 - `pw-dashboard.config.mjs`
 - `pw_dashboard.config.js` (legacy underscore alias)
 
+> `pw-dashboard.config.ts` and `pw_dashboard.config.ts` are not supported for `pw-history-init`.
+
 ```js
 // pw-dashboard.config.js
 module.exports = {
@@ -34,10 +36,32 @@ module.exports = {
 
 A starter config file is included in the package at `pw-dashboard.config.js`.
 
+> You can also keep all settings in `playwright.config.*` reporter options (one place):
+>
+> ```ts
+> reporter: [
+>   ['html'],
+>   ['@acahet/playwright-reporter/reporter', {
+>     historyDir: 'dashboard/test-history',
+>     projectName: 'Acme E2E',
+>     brandName: 'Acme Dashboard',
+>     pageTitle: 'Acme Test Dashboard',
+>   }],
+> ],
+> ```
+>
+> Then `npx pw-history-init` will infer these values as fallback if no `pw-dashboard.config.*` exists.
+>
 ### 2. Generate the dashboard
 
 ```bash
 npx pw-history-init
+```
+
+Or when using a config path outside standard names:
+
+```bash
+npx pw-history-init --playwright-config=playwright.config.ts --dashboard-config=pw-dashboard.config.js
 ```
 
 Reads your config file, injects your settings, and writes `index.html` into `historyDir`. Re-run after upgrading the package to pick up dashboard updates; your config is always preserved.
@@ -54,6 +78,9 @@ export default defineConfig({
 			'@acahet/playwright-reporter/reporter',
 			{
 				historyDir: 'dashboard/test-history', // must match pw-dashboard.config.*
+				projectName: 'PW-UI-API',
+				brandName: 'ACAHET DASHBOARD',
+				pageTitle: 'Reporter',
 				maxRuns: 30, // optional, default is 30
 			},
 		],
@@ -65,16 +92,28 @@ export default defineConfig({
 });
 ```
 
-Important: `pw-history-init` uses `pw-dashboard.config.*` to generate `index.html`, while the reporter options in `playwright.config.*` control where `history-index.json` and `runs/` are written. Keep `historyDir` identical in both.
+Important: `pw-history-init` uses `pw-dashboard.config.*` to generate `index.html`. In addition, if you don’t have a dashboard config file, `pw-history-init` now falls back to reporter options found in `playwright.config.*` (projectName, brandName, pageTitle, historyDir). Keep `historyDir` identical between settings to avoid stale data.
+
+> Note: `pw-history-init` only builds the dashboard UI. You must run `npx playwright test` to produce test run data (`history-index.json` + `runs/<run-id>`) that the dashboard visualizes.
+>
+> This README is included in the published npm package (`node_modules/@acahet/playwright-reporter/README.md`), so consumers can read this flow in installation docs.
 
 ### 4. Run tests and serve the dashboard
 
 ```bash
 npx playwright test
-npx serve dashboard/test-history
+# Install serve if missing:
+# npm install -D serve
+# or npm install -g serve
+# then point to your configured historyDir:
+# npx serve dashboard/test-history
+# or npx serve tests/report/test-history
+npx serve <your historyDir>
 ```
 
 Open `http://localhost:3000` — the dashboard always shows the latest run.
+
+> ⚠️ If your dashboard appears stale, re-run `npx pw-history-init` and confirm your `historyDir` is the same in both `pw-dashboard.config.*` and `playwright.config.*`.
 
 ---
 
