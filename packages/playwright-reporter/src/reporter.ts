@@ -51,12 +51,19 @@ interface HistoryIndex {
 	runs: TestHistoryEntry[];
 }
 
-// How many runs to keep in the index AND on disk — overridable via options
 const DEFAULT_MAX_RUNS = 30;
 
-interface ReporterOptions {
+export interface ReporterOptions {
+	/** Directory where history-index.json and index.html are written. Default: ./dashboard/test-history */
 	historyDir?: string;
+	/** Max runs to keep. Default: 30 */
 	maxRuns?: number;
+	/** Project name shown in the dashboard topbar and PDF. */
+	projectName?: string;
+	/** Brand name shown top-left. Default: pw_dashboard */
+	brandName?: string;
+	/** Browser tab title. Default: Test History Dashboard */
+	pageTitle?: string;
 }
 
 class LocalHistoryReporter implements Reporter {
@@ -69,17 +76,25 @@ class LocalHistoryReporter implements Reporter {
 	private currentRunId!: string;
 	private currentRunDir!: string;
 
+	// Dashboard display options — written into index.html after every run
+	private projectName: string;
+	private brandName: string;
+	private pageTitle: string;
+
 	constructor(options: ReporterOptions = {}) {
-		this.historyDir = options.historyDir ?? './tests/report/test-history';
-		this.maxRuns = options.maxRuns ?? DEFAULT_MAX_RUNS;
+		this.historyDir    = options.historyDir    ?? './dashboard/test-history';
+		this.maxRuns       = options.maxRuns       ?? DEFAULT_MAX_RUNS;
+		this.projectName   = options.projectName   ?? '';
+		this.brandName     = options.brandName     ?? 'pw_dashboard';
+		this.pageTitle     = options.pageTitle     ?? 'Test History Dashboard';
 		this.historyIndexFile = `${this.historyDir}/history-index.json`;
 	}
 
 	async onBegin(config: FullConfig, suite: Suite) {
-		this.config = config;
-		this.suite = suite;
-		this.startTime = Date.now();
-		this.currentRunId = new Date().toISOString().replace(/[:.]/g, '-');
+		this.config        = config;
+		this.suite         = suite;
+		this.startTime     = Date.now();
+		this.currentRunId  = new Date().toISOString().replace(/[:.]/g, '-');
 		this.currentRunDir = `${this.historyDir}/runs/${this.currentRunId}`;
 
 		await fs.mkdir(this.currentRunDir, { recursive: true });
@@ -88,28 +103,28 @@ class LocalHistoryReporter implements Reporter {
 	async onEnd(_result: FullResult) {
 		try {
 			const duration = Date.now() - this.startTime;
-			const stats = this.collectTestStats(this.suite);
+			const stats    = this.collectTestStats(this.suite);
 
 			await this.copyFailureArtifacts(stats.failedTests);
 
 			const historyEntry: TestHistoryEntry = {
-				runId: this.currentRunId,
-				timestamp: new Date().toISOString(),
+				runId:       this.currentRunId,
+				timestamp:   new Date().toISOString(),
 				duration,
-				totalTests: stats.total,
-				passed: stats.passed,
-				failed: stats.failed,
-				skipped: stats.skipped,
-				flaky: stats.flaky,
-				allTests: stats.allTests,
+				totalTests:  stats.total,
+				passed:      stats.passed,
+				failed:      stats.failed,
+				skipped:     stats.skipped,
+				flaky:       stats.flaky,
+				allTests:    stats.allTests,
 				failedTests: stats.failedTests,
 			};
 
 			await this.updateHistoryIndex(historyEntry);
-
-			// Cleanup is driven by the index: runs evicted from the index get their
-			// directories deleted. No separate time-based policy — one source of truth.
 			await this.cleanupOrphanedRunDirs();
+
+			// Write dashboard HTML with current config injected — always fresh
+			await this.writeDashboard();
 		} catch (err) {
 			process.stderr.write(
 				`[LocalHistoryReporter] Failed to save history: ${String(err)}\n`,
@@ -117,27 +132,88 @@ class LocalHistoryReporter implements Reporter {
 		}
 	}
 
+	// ─── Dashboard HTML generation ───────────────────────────────────────────
+
+	/**
+	 * Locates the dashboard template (index.html shipped with this package),
+	 * injects the current CONFIG values, and writes it to historyDir/index.html.
+	 *
+	 * The template is resolved relative to this file so it works whether the
+	 * package is installed as a dependency or run from source.
+	 */
+	private async writeDashboard() {
+		// Resolve template: dist/src/reporter.js → ../../dashboard/index.html
+		const templatePath = path.resolve(__dirname, '../../dashboard/index.html');
+
+		let template: string;
+		try {
+			template = await fs.readFile(templatePath, 'utf-8');
+		} catch {
+			process.stderr.write(
+				`[LocalHistoryReporter] Dashboard template not found at ${templatePath} — skipping HTML generation.\n`,
+			);
+			return;
+		}
+
+		const output = this.injectConfig(template);
+		const dest   = path.join(this.historyDir, 'index.html');
+		await fs.writeFile(dest, output, 'utf-8');
+	}
+
+	/**
+	 * Replaces the CONFIG block in the dashboard template with current values.
+	 * Matches the same banner pattern used by the old init script so the
+	 * template stays compatible with both workflows.
+	 */
+	private injectConfig(html: string): string {
+		const configBlock = `const CONFIG = {
+  pageTitle:        ${JSON.stringify(this.pageTitle)},
+  projectName:      ${JSON.stringify(this.projectName)},
+  brandName:        ${JSON.stringify(this.brandName)},
+  historyIndexPath: "history-index.json",
+  emptyTitle:       "No test history yet",
+  emptyMessage:     "Run your tests to start tracking history.",
+  errorTitle:       "Could not load history",
+  errorMessage:     "Make sure history-index.json is in the same directory.",
+};`;
+
+		const pattern =
+			/\/\/ ─+\r?\n\/\/ CONFIG[^\r\n]*\r?\n\/\/ ─+\r?\nconst CONFIG = \{[\s\S]*?\};\r?\n\/\/ ─+/;
+
+		if (!pattern.test(html)) {
+			// Template doesn't have the banner — do a simpler replacement
+			return html.replace(/const CONFIG = \{[\s\S]*?\};/, configBlock);
+		}
+
+		return html.replace(
+			pattern,
+			[
+				'// ─────────────────────────────────────────────────────────────────────────────',
+				'// CONFIG — generated by @acahet/playwright-reporter after every run',
+				'// ─────────────────────────────────────────────────────────────────────────────',
+				configBlock,
+				'// ─────────────────────────────────────────────────────────────────────────────',
+			].join('\n'),
+		);
+	}
+
 	// ─── Stats collection ────────────────────────────────────────────────────
 
 	private collectTestStats(suite: Suite) {
-		let total = 0;
-		let passed = 0;
-		let failed = 0;
+		let total   = 0;
+		let passed  = 0;
+		let failed  = 0;
 		let skipped = 0;
-		let flaky = 0;
-		const allTests: TestInfo[] = [];
+		let flaky   = 0;
+		const allTests:    TestInfo[] = [];
 		const failedTests: TestInfo[] = [];
 
 		const processSuite = (s: Suite) => {
 			for (const test of s.tests) {
-				// Skip setup project tests — they're infrastructure, not results
-				if (test.parent?.project()?.name === 'setup') {
-					continue;
-				}
+				if (test.parent?.project()?.name === 'setup') continue;
 
 				total++;
-
-				const results = test.results;
+				const results    = test.results;
 
 				if (results.length === 0) {
 					skipped++;
@@ -149,44 +225,23 @@ class LocalHistoryReporter implements Reporter {
 
 				if (lastResult.status === 'skipped') {
 					skipped++;
-					allTests.push(
-						this.createTestEntry(test, lastResult, 'skipped'),
-					);
+					allTests.push(this.createTestEntry(test, lastResult, 'skipped'));
 				} else if (lastResult.status === 'passed') {
-					// Flaky = passed on a retry (at least one earlier attempt failed)
-					const isFlaky =
-						results.length > 1 &&
-						results.some((r) => r.status !== 'passed');
-					if (isFlaky) {
-						flaky++;
-					}
+					const isFlaky = results.length > 1 && results.some(r => r.status !== 'passed');
+					if (isFlaky) flaky++;
 					passed++;
-					allTests.push(
-						this.createTestEntry(
-							test,
-							lastResult,
-							isFlaky ? 'flaky' : 'passed',
-						),
-					);
+					allTests.push(this.createTestEntry(test, lastResult, isFlaky ? 'flaky' : 'passed'));
 				} else {
 					failed++;
-					const entry = this.createTestEntry(
-						test,
-						lastResult,
-						'failed',
-					);
+					const entry = this.createTestEntry(test, lastResult, 'failed');
 					failedTests.push(entry);
 					allTests.push(entry);
 				}
 			}
-
-			for (const child of s.suites) {
-				processSuite(child);
-			}
+			for (const child of s.suites) processSuite(child);
 		};
 
 		processSuite(suite);
-
 		return { total, passed, failed, skipped, flaky, allTests, failedTests };
 	}
 
@@ -195,94 +250,57 @@ class LocalHistoryReporter implements Reporter {
 		result: TestResult | null,
 		status: string,
 	): TestInfo {
-		const projectName = test.parent?.project()?.name || 'unknown';
+		const projectName  = test.parent?.project()?.name || 'unknown';
 		const relativePath = path.relative(process.cwd(), test.location.file);
-
-		// Keep backward-compatible tag extraction shape.
-		const testTags =
-			(test as TestCaseWithTags).tags ??
-			(test.tags.length > 0 ? test.tags : []);
+		const testTags     = (test as TestCaseWithTags).tags ?? (test.tags.length > 0 ? test.tags : []);
 
 		const attachmentPaths = (result?.attachments ?? [])
-			.map((a) => a.path)
+			.map(a => a.path)
 			.filter((p): p is string => typeof p === 'string');
 
 		return {
-			title: test.title,
-			file: relativePath,
+			title:   test.title,
+			file:    relativePath,
 			project: projectName,
 			duration: result?.duration ?? 0,
 			status,
-			error: result?.error?.message,
-			tags: testTags.length > 0 ? testTags : undefined,
-			// Playwright annotations: test.info().annotations or test.annotations
-			annotations:
-				test.annotations.length > 0 ? test.annotations : undefined,
-			attachmentPaths:
-				attachmentPaths.length > 0 ? attachmentPaths : undefined,
-			artifacts: {
-				trace: undefined,
-				screenshot: undefined,
-			},
+			error:   result?.error?.message,
+			tags:    testTags.length > 0 ? testTags : undefined,
+			annotations: test.annotations.length > 0 ? test.annotations : undefined,
+			attachmentPaths: attachmentPaths.length > 0 ? attachmentPaths : undefined,
+			artifacts: { trace: undefined, screenshot: undefined },
 		};
 	}
 
 	// ─── Artifact copying ────────────────────────────────────────────────────
 
-	/**
-	 * Copies trace and screenshot for each failed test by looking inside the
-	 * test-specific output folder Playwright creates, rather than scanning the
-	 * entire project outputDir. This prevents one test from overwriting another's
-	 * artifacts when multiple tests fail in the same project.
-	 *
-	 * Playwright names the folder:
-	 *   test-results/<sanitized-test-title>-<project>/
-	 */
 	private async copyFailureArtifacts(failedTests: TestInfo[]) {
 		for (const failedTest of failedTests) {
 			try {
-				const candidateFiles = await this.getArtifactCandidateFiles(
-					failedTest,
-				);
-				const baseName = this.sanitizeFilename(failedTest.title);
+				const candidateFiles = await this.getArtifactCandidateFiles(failedTest);
+				const baseName       = this.sanitizeFilename(failedTest.title);
 
 				for (const srcPath of candidateFiles) {
 					const fileName = path.basename(srcPath).toLowerCase();
 
 					if (!failedTest.artifacts.trace && fileName.endsWith('trace.zip')) {
-						const destPath = path.join(
-							this.currentRunDir,
-							`${baseName}-trace.zip`,
-						);
+						const destPath = path.join(this.currentRunDir, `${baseName}-trace.zip`);
 						await fs.copyFile(srcPath, destPath);
-						failedTest.artifacts.trace = path.relative(
-							this.historyDir,
-							destPath,
-						);
+						failedTest.artifacts.trace = path.relative(this.historyDir, destPath);
 						continue;
 					}
 
-					const isImage = /\.(png|jpg|jpeg)$/i.test(fileName);
-					const isFailureShot =
-						fileName.includes('screenshot') ||
-						fileName.includes('test-failed');
+					const isImage       = /\.(png|jpg|jpeg)$/i.test(fileName);
+					const isFailureShot = fileName.includes('screenshot') || fileName.includes('test-failed');
 
 					if (!failedTest.artifacts.screenshot && isImage && isFailureShot) {
-						const ext = path.extname(fileName) || '.png';
-						const destPath = path.join(
-							this.currentRunDir,
-							`${baseName}-screenshot${ext}`,
-						);
+						const ext      = path.extname(fileName) || '.png';
+						const destPath = path.join(this.currentRunDir, `${baseName}-screenshot${ext}`);
 						await fs.copyFile(srcPath, destPath);
-						failedTest.artifacts.screenshot = path.relative(
-							this.historyDir,
-							destPath,
-						);
+						failedTest.artifacts.screenshot = path.relative(this.historyDir, destPath);
 					}
 
-					if (failedTest.artifacts.trace && failedTest.artifacts.screenshot) {
-						break;
-					}
+					if (failedTest.artifacts.trace && failedTest.artifacts.screenshot) break;
 				}
 			} catch (err) {
 				process.stderr.write(
@@ -293,79 +311,42 @@ class LocalHistoryReporter implements Reporter {
 	}
 
 	private async getArtifactCandidateFiles(test: TestInfo): Promise<string[]> {
-		const files: string[] = [];
-		const seen = new Set<string>();
+		const files = new Map<string, true>();
 
 		const addFile = async (filePath: string) => {
-			let stat: Awaited<ReturnType<typeof fs.stat>>;
 			try {
-				stat = await fs.stat(filePath);
-			} catch {
-				return;
-			}
-			if (!stat.isFile()) return;
-			if (seen.has(filePath)) return;
-			seen.add(filePath);
-			files.push(filePath);
+				const stat = await fs.stat(filePath);
+				if (stat.isFile() && !files.has(filePath)) files.set(filePath, true);
+			} catch { /* file doesn't exist */ }
 		};
 
-		for (const attachmentPath of test.attachmentPaths ?? []) {
-			await addFile(attachmentPath);
-		}
+		for (const p of test.attachmentPaths ?? []) await addFile(p);
 
-		// Fallback to conventional Playwright output layout for environments
-		// where attachment paths are missing in reporter events.
-		const conventionalOutputDir = this.resolveTestOutputDir(test);
-		const fromDir = await this.listFilesRecursively(conventionalOutputDir);
-		for (const filePath of fromDir) {
-			if (!seen.has(filePath)) {
-				seen.add(filePath);
-				files.push(filePath);
-			}
-		}
+		const fromDir = await this.listFilesRecursively(this.resolveTestOutputDir(test));
+		for (const p of fromDir) if (!files.has(p)) files.set(p, true);
 
-		return files;
+		return [...files.keys()];
 	}
 
 	private async listFilesRecursively(dir: string): Promise<string[]> {
 		let entries: import('node:fs').Dirent[];
 		try {
-			entries = await fs.readdir(dir, {
-				withFileTypes: true,
-				encoding: 'utf8',
-			});
+			entries = await fs.readdir(dir, { withFileTypes: true, encoding: 'utf8' });
 		} catch {
 			return [];
 		}
-
 		const files: string[] = [];
 		for (const entry of entries) {
-			const fullPath = path.join(dir, entry.name);
-			if (entry.isFile()) {
-				files.push(fullPath);
-				continue;
-			}
-			if (entry.isDirectory()) {
-				const nested = await this.listFilesRecursively(fullPath);
-				files.push(...nested);
-			}
+			const full = path.join(dir, entry.name);
+			if (entry.isFile()) { files.push(full); continue; }
+			if (entry.isDirectory()) files.push(...await this.listFilesRecursively(full));
 		}
-
 		return files;
 	}
 
-	/**
-	 * Resolves the Playwright-generated output folder for a specific test.
-	 * Playwright convention: test-results/{title-slug}-{project}/
-	 */
 	private resolveTestOutputDir(test: TestInfo): string {
-		const slug = test.title
-			.replace(/\W+/g, '-')
-			.replace(/^-+|-+$/g, '')
-			.toLowerCase();
-
+		const slug        = test.title.replace(/\W+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
 		const projectSlug = test.project.toLowerCase();
-
 		return path.join('test-results', `${slug}-${projectSlug}`);
 	}
 
@@ -377,61 +358,41 @@ class LocalHistoryReporter implements Reporter {
 
 	private async updateHistoryIndex(entry: TestHistoryEntry) {
 		let historyIndex: HistoryIndex;
-
 		try {
 			const content = await fs.readFile(this.historyIndexFile, 'utf-8');
-			historyIndex = JSON.parse(content) as HistoryIndex;
+			historyIndex  = JSON.parse(content) as HistoryIndex;
 		} catch {
 			historyIndex = { runs: [] };
 		}
 
 		historyIndex.runs.unshift(entry);
 
-		// Evict runs beyond the cap — collect their IDs before trimming
-		const evictedRunIds = historyIndex.runs
-			.slice(this.maxRuns)
-			.map((r) => r.runId);
+		const evictedRunIds = historyIndex.runs.slice(this.maxRuns).map(r => r.runId);
+		historyIndex.runs   = historyIndex.runs.slice(0, this.maxRuns);
 
-		historyIndex.runs = historyIndex.runs.slice(0, this.maxRuns);
+		await fs.writeFile(this.historyIndexFile, JSON.stringify(historyIndex, null, 2));
 
-		await fs.writeFile(
-			this.historyIndexFile,
-			JSON.stringify(historyIndex, null, 2),
-		);
-
-		// Delete directories for evicted runs immediately — index and disk stay in sync
-		for (const runId of evictedRunIds) {
-			await this.deleteRunDir(runId);
-		}
+		for (const runId of evictedRunIds) await this.deleteRunDir(runId);
 	}
 
-	/**
-	 * Removes run directories that exist on disk but are no longer referenced
-	 * by the index. Guards against orphans left by earlier bugs or manual edits.
-	 */
 	private async cleanupOrphanedRunDirs() {
 		const runsBaseDir = path.join(this.historyDir, 'runs');
-
 		let existingDirs: string[];
 		try {
 			existingDirs = await fs.readdir(runsBaseDir);
 		} catch {
-			return; // runs/ dir doesn't exist yet — nothing to clean
+			return;
 		}
-
 		let indexedRunIds: Set<string>;
 		try {
-			const content = await fs.readFile(this.historyIndexFile, 'utf-8');
-			const index = JSON.parse(content) as HistoryIndex;
-			indexedRunIds = new Set(index.runs.map((r) => r.runId));
+			const content  = await fs.readFile(this.historyIndexFile, 'utf-8');
+			const index    = JSON.parse(content) as HistoryIndex;
+			indexedRunIds  = new Set(index.runs.map(r => r.runId));
 		} catch {
-			return; // can't read index — don't delete anything
+			return;
 		}
-
 		for (const dir of existingDirs) {
-			if (!indexedRunIds.has(dir)) {
-				await this.deleteRunDir(dir);
-			}
+			if (!indexedRunIds.has(dir)) await this.deleteRunDir(dir);
 		}
 	}
 
