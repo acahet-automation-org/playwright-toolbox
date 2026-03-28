@@ -1,0 +1,53 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/" # root package.json
+    schedule:
+      interval: "weekly"
+    groups:
+      playwright-dependencies:
+        patterns:
+          - "playwright"
+          - "@playwright/*"
+    labels:
+      - "dependencies"
+    versioning-strategy: increase
+
+  - package-ecosystem: "npm"
+    directory: "/packages/playwright-configs"
+    schedule:
+      interval: "weekly"
+    groups:
+      playwright-dependencies:
+        patterns:
+          - "playwright"
+          - "@playwright/*"
+    labels:
+      - "dependencies"
+    versioning-strategy: increase
+
+  - package-ecosystem: "npm"
+    directory: "/packages/playwright-reporter"
+    schedule:
+      interval: "weekly"
+    groups:
+      playwright-dependencies:
+        patterns:
+          - "playwright"
+          - "@playwright/*"
+    labels:
+      - "dependencies"
+    versioning-strategy: increase
+
+  - package-ecosystem: "npm"
+    directory: "/packages/playwright-rules"
+    schedule:
+      interval: "weekly"
+    groups:
+      playwright-dependencies:
+        patterns:
+          - "playwright"
+          - "@playwright/*"
+    labels:
+      - "dependencies"
+    versioning-strategy: increase
