@@ -34,7 +34,7 @@ export function findAncestor(
 	context: Rule.RuleContext,
 	predicate: (n: Node) => boolean,
 ): Node | null {
-	const ancestors = context.getAncestors();
+	const ancestors = context.sourceCode.getAncestors(node);
 	for (let i = ancestors.length - 1; i >= 0; i--) {
 		if (predicate(ancestors[i])) return ancestors[i];
 	}
