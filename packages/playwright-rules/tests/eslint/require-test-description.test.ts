@@ -2,7 +2,7 @@ import { RuleTester } from 'eslint';
 import rule from '../../src/eslint/rules/require-test-description';
 
 const tester = new RuleTester({
-	parserOptions: { ecmaVersion: 2020, sourceType: 'module' },
+	languageOptions: { ecmaVersion: 2020, sourceType: 'module' },
 });
 
 tester.run('require-test-description', rule, {

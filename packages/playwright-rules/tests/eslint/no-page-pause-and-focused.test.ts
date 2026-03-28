@@ -3,7 +3,7 @@ import noPagePause from '../../src/eslint/rules/no-page-pause';
 import noFocusedTests from '../../src/eslint/rules/no-focused-tests';
 
 const tester = new RuleTester({
-	parserOptions: { ecmaVersion: 2020, sourceType: 'module' },
+	languageOptions: { ecmaVersion: 2020, sourceType: 'module' },
 });
 
 tester.run('no-page-pause', noPagePause, {
