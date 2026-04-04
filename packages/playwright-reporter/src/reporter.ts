@@ -28,6 +28,7 @@ interface TestInfo {
 	tags?: string[];
 	annotations?: Annotation[];
 	attachmentPaths?: string[];
+	quarantined?: boolean;
 	artifacts: {
 		trace?: string;
 		screenshot?: string;
@@ -43,6 +44,7 @@ interface TestHistoryEntry {
 	failed: number;
 	skipped: number;
 	flaky: number;
+	quarantined: number;
 	allTests: TestInfo[];
 	failedTests: TestInfo[];
 }
@@ -116,6 +118,7 @@ class LocalHistoryReporter implements Reporter {
 				failed:      stats.failed,
 				skipped:     stats.skipped,
 				flaky:       stats.flaky,
+				quarantined: stats.quarantined,
 				allTests:    stats.allTests,
 				failedTests: stats.failedTests,
 			};
@@ -200,11 +203,12 @@ class LocalHistoryReporter implements Reporter {
 	// ─── Stats collection ────────────────────────────────────────────────────
 
 	private collectTestStats(suite: Suite) {
-		let total   = 0;
-		let passed  = 0;
-		let failed  = 0;
-		let skipped = 0;
-		let flaky   = 0;
+		let total       = 0;
+		let passed      = 0;
+		let failed      = 0;
+		let skipped     = 0;
+		let flaky       = 0;
+		let quarantined = 0;
 		const allTests:    TestInfo[] = [];
 		const failedTests: TestInfo[] = [];
 
@@ -242,7 +246,8 @@ class LocalHistoryReporter implements Reporter {
 		};
 
 		processSuite(suite);
-		return { total, passed, failed, skipped, flaky, allTests, failedTests };
+		quarantined = allTests.filter(t => t.quarantined).length;
+		return { total, passed, failed, skipped, flaky, quarantined, allTests, failedTests };
 	}
 
 	private createTestEntry(
@@ -258,6 +263,10 @@ class LocalHistoryReporter implements Reporter {
 			.map(a => a.path)
 			.filter((p): p is string => typeof p === 'string');
 
+		const isQuarantined = testTags.some(
+			t => t.toLowerCase() === '@quarantine' || t.toLowerCase() === 'quarantine',
+		);
+
 		return {
 			title:   test.title,
 			file:    relativePath,
@@ -268,6 +277,7 @@ class LocalHistoryReporter implements Reporter {
 			tags:    testTags.length > 0 ? testTags : undefined,
 			annotations: test.annotations.length > 0 ? test.annotations : undefined,
 			attachmentPaths: attachmentPaths.length > 0 ? attachmentPaths : undefined,
+			quarantined: isQuarantined || undefined,
 			artifacts: { trace: undefined, screenshot: undefined },
 		};
 	}
