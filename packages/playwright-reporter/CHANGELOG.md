@@ -1,5 +1,11 @@
 # @acahet/playwright-reporter
 
+## 0.1.4
+
+### Patch Changes
+
+- a3480cc: implement csv, quaratine, regression trend
+
 ## 0.1.3
 
 ### Patch Changes
