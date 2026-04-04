@@ -33,16 +33,11 @@ jobs:
           if (!names.length) {
             process.exit(1);
           }
-          console.log(names.map((name) => `'${name}': patch`).join('\n'));
+          console.log(names.map((name) => `"${name}": patch`).join('\n'));
           NODE
           )
 
-          cat > .changeset/dependabot-${CHANGESET_ID}.md <<'EOF'
-          ---
-          $CHANGES
-          ---
-          chore(deps): automated dependency update
-          EOF
+          printf -- "---\n%s\n---\nchore(deps): automated dependency update\n" "$CHANGES" > .changeset/dependabot-${CHANGESET_ID}.md
 
       - name: Commit Changeset
         run: |
