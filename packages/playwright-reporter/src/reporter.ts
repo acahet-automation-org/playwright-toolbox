@@ -66,6 +66,12 @@ export interface ReporterOptions {
 	brandName?: string;
 	/** Browser tab title. Default: Test History Dashboard */
 	pageTitle?: string;
+	/** Number of prior runs used to compute rolling average for regression detection. Default: 10 */
+	durationRegressionWindow?: number;
+	/** Multiplier above rolling average that flags a test as regressing. Default: 1.5 */
+	durationRegressionThreshold?: number;
+	/** Minimum prior data points required before flagging a regression. Default: 3 */
+	durationRegressionMinRuns?: number;
 }
 
 class LocalHistoryReporter implements Reporter {
@@ -82,6 +88,9 @@ class LocalHistoryReporter implements Reporter {
 	private projectName: string;
 	private brandName: string;
 	private pageTitle: string;
+	private durationRegressionWindow: number;
+	private durationRegressionThreshold: number;
+	private durationRegressionMinRuns: number;
 
 	constructor(options: ReporterOptions = {}) {
 		this.historyDir    = options.historyDir    ?? './dashboard/test-history';
@@ -89,6 +98,9 @@ class LocalHistoryReporter implements Reporter {
 		this.projectName   = options.projectName   ?? '';
 		this.brandName     = options.brandName     ?? 'pw_dashboard';
 		this.pageTitle     = options.pageTitle     ?? 'Test History Dashboard';
+		this.durationRegressionWindow    = options.durationRegressionWindow    ?? 10;
+		this.durationRegressionThreshold = options.durationRegressionThreshold ?? 1.5;
+		this.durationRegressionMinRuns   = options.durationRegressionMinRuns   ?? 3;
 		this.historyIndexFile = `${this.historyDir}/history-index.json`;
 	}
 
@@ -178,6 +190,9 @@ class LocalHistoryReporter implements Reporter {
   emptyMessage:     "Run your tests to start tracking history.",
   errorTitle:       "Could not load history",
   errorMessage:     "Make sure history-index.json is in the same directory.",
+  durationRegressionWindow:    ${this.durationRegressionWindow},
+  durationRegressionThreshold: ${this.durationRegressionThreshold},
+  durationRegressionMinRuns:   ${this.durationRegressionMinRuns},
 };`;
 
 		const pattern =
