@@ -44,6 +44,19 @@
   --border2: #ccd2e3;
 }
 
+    /* System: follow OS when no explicit theme is forced */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    --bg: #f8f9fc;
+    --surface: #ffffff;
+    --surface2: #f1f3f9;
+    --border: #dbe0eb;
+    --text: #1a1c23;
+    --muted: #646c8a;
+    --border2: #ccd2e3;
+  }
+}
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -1641,6 +1654,63 @@
 
     .export-btn:hover { color: var(--text); border-color: var(--accent); background: rgba(91,124,246,.08); }
 
+    /* ── CSV split-button dropdown ───────────────────────────── */
+    .csv-btn-wrap {
+      display: none;
+      position: relative;
+    }
+
+    .csv-btn-wrap .export-btn {
+      display: inline-flex;
+      border-right: none;
+      border-radius: var(--radius) 0 0 var(--radius);
+    }
+
+    .csv-chevron {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 8px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      border: 1px solid var(--border2);
+      border-left: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .csv-chevron:hover { color: var(--text); border-color: var(--accent); background: rgba(91,124,246,.08); }
+
+    .csv-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      min-width: 140px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      z-index: 50;
+      box-shadow: 0 4px 12px rgba(0,0,0,.35);
+    }
+
+    .csv-dropdown.open { display: block; }
+
+    .csv-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+
+    .csv-dropdown-item:hover { background: var(--surface); color: var(--text); }
+
     .theme-toggle {
   display: inline-flex;
   gap: 2px;
@@ -1743,6 +1813,25 @@
       <span id="brandName">pw_dashboard</span>
     </div>
     <div class="topbar-meta" id="topbarMeta">loading…</div>
+    <div class="csv-btn-wrap" id="exportCsvWrap">
+      <button class="export-btn" id="exportCsvBtn" onclick="exportCSV('latest')">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Export CSV
+      </button>
+      <button class="csv-chevron" id="csvChevron" onclick="toggleCsvDropdown(event)">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="csv-dropdown" id="csvDropdown">
+        <div class="csv-dropdown-item" onclick="exportCSV('latest');closeCsvDropdown()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="6" r="1.5" fill="currentColor"/></svg>
+          Latest run
+        </div>
+        <div class="csv-dropdown-item" onclick="exportCSV('all');closeCsvDropdown()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M1 6h10M1 9h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          All runs
+        </div>
+      </div>
+    </div>
     <button class="export-btn" id="exportBtn" onclick="exportPDF()">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
       Export PDF
@@ -1955,6 +2044,8 @@ function render() {
   renderSidebarFilters();
   const exportBtn = document.getElementById('exportBtn');
   if (exportBtn) exportBtn.style.display = 'inline-flex';
+  const exportCsvWrap = document.getElementById('exportCsvWrap');
+  if (exportCsvWrap) exportCsvWrap.style.display = 'flex';
   renderMainContent(latest, totalRuns, avgPass, latestRate);
 }
 
@@ -2465,6 +2556,53 @@ window.exportPDF = function() {
   el.innerHTML = buildPrintReport();
   window.print();
 };
+
+window.exportCSV = function(scope = 'latest') {
+  if (!runs.length) return;
+  const csvEsc = v => {
+    const s = String(v ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const headers = ['run_id','timestamp','suite','title','project','status','duration_ms','tags','error'];
+  const rows = [headers.join(',')];
+  const target = scope === 'all' ? runs : [runs[0]];
+  target.forEach(run => {
+    (run.allTests ?? []).forEach(t => {
+      const suite = t.file?.split('/').pop()?.replace(/\.spec\.(ts|js)$/, '') ?? '';
+      rows.push([
+        csvEsc(run.runId ?? ''),
+        csvEsc(run.timestamp ?? ''),
+        csvEsc(suite),
+        csvEsc(t.title ?? ''),
+        csvEsc(t.project ?? ''),
+        csvEsc(t.status ?? ''),
+        csvEsc(t.duration ?? ''),
+        csvEsc((t.tags ?? []).join(';')),
+        csvEsc((t.error ?? '').split('\n')[0])
+      ].join(','));
+    });
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const projectName = (CONFIG.projectName || CONFIG.brandName || 'tests').replace(/[^a-z0-9_-]/gi, '_');
+  const suffix = scope === 'all' ? 'all_runs' : 'latest_run';
+  a.href     = url;
+  a.download = `${projectName}_${suffix}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+window.toggleCsvDropdown = function(e) {
+  e.stopPropagation();
+  document.getElementById('csvDropdown').classList.toggle('open');
+};
+
+window.closeCsvDropdown = function() {
+  document.getElementById('csvDropdown').classList.remove('open');
+};
+
+document.addEventListener('click', () => closeCsvDropdown());
 
 window.jumpToRun = function(idx) {
   // Highlight sidebar item
@@ -2983,7 +3121,7 @@ function renderRunsList() {
               </div>`
             }
             <div id="tests-${idx}">
-              ${displayTests.length ? renderTestRows(displayTests, p75) : `<div style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:8px 0">No ${activeFilter} tests in this run.</div>`}
+              ${displayTests.length ? renderTestRows(displayTests, p75) : `<div style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:8px 0">No ${activeFilter === 'failed' ? 'test failed' : activeFilter + ' tests'} in this run.</div>`}
             </div>
           </div>` : ''}
       </div>`;
@@ -3052,35 +3190,26 @@ window.showAllTests = function(idx) {
 };
 const buttons = document.querySelectorAll('.theme-btn');
 
-buttons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    // remove active from all
-    buttons.forEach(b => b.classList.remove('active'));
-
-    // activate clicked
-    btn.classList.add('active');
-
-    const theme = btn.dataset.theme;
-
-    if (theme === 'system') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-  });
-});
-const saved = localStorage.getItem('theme');
-if (saved) {
-  document.documentElement.setAttribute('data-theme', saved);
-  document.querySelector(`[data-theme="${saved}"]`)?.classList.add('active');
+function applyTheme(theme) {
+  buttons.forEach(b => b.classList.remove('active'));
+  document.querySelector(`.theme-btn[data-theme="${theme}"]`)?.classList.add('active');
+  if (theme === 'system') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
 }
 
 buttons.forEach(btn => {
   btn.addEventListener('click', () => {
     const theme = btn.dataset.theme;
     localStorage.setItem('theme', theme);
+    applyTheme(theme);
   });
 });
+
+const saved = localStorage.getItem('theme');
+applyTheme(saved ?? 'system');
 
 // ── Go ─────────────────────────────────────────────────────────────────────
 init();
