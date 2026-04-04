@@ -1,5 +1,11 @@
 # @acahet/playwright-reporter
 
+## 0.1.3
+
+### Patch Changes
+
+- 3beae43: chore(deps): automated dependency update
+
 ## 0.1.2
 
 ### Patch Changes
