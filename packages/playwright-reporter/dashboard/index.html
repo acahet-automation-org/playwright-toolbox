@@ -28,6 +28,8 @@
       --skip-bg:        rgba(123,130,160,.12);
       --quarantine:     #a78bfa;
       --quarantine-bg:  rgba(167,139,250,.12);
+      --regression:     #f97316;
+      --regression-bg:  rgba(249,115,22,.12);
 
       --radius:    8px;
       --radius-lg: 12px;
@@ -296,12 +298,13 @@
       border-top: 3px solid transparent;
     }
 
-    .latest-stat.pass-card  { border-top-color: var(--pass); }
-    .latest-stat.fail-card  { border-top-color: var(--fail); }
+    .latest-stat.pass-card        { border-top-color: var(--pass);        }
+    .latest-stat.fail-card        { border-top-color: var(--fail);        }
     .latest-stat.flaky-card       { border-top-color: var(--flaky);       }
     .latest-stat.quarantine-card  { border-top-color: var(--quarantine);  }
-    .latest-stat.skip-card  { border-top-color: var(--skip); }
-    .latest-stat.dur-card   { border-top-color: var(--accent); }
+    .latest-stat.regression-card  { border-top-color: var(--regression);  }
+    .latest-stat.skip-card        { border-top-color: var(--skip);        }
+    .latest-stat.dur-card         { border-top-color: var(--accent);      }
     .latest-stat.rate-card  { border-top-color: var(--accent2); }
     .latest-stat.total-card { border-top-color: var(--border2); }
 
@@ -335,11 +338,12 @@
       box-shadow: 0 0 0 1px var(--border2);
     }
 
-    .latest-stat.pass-card.active-filter  { box-shadow: 0 0 0 1px var(--pass); }
-    .latest-stat.fail-card.active-filter  { box-shadow: 0 0 0 1px var(--fail); }
+    .latest-stat.pass-card.active-filter        { box-shadow: 0 0 0 1px var(--pass);        }
+    .latest-stat.fail-card.active-filter        { box-shadow: 0 0 0 1px var(--fail);        }
     .latest-stat.flaky-card.active-filter       { box-shadow: 0 0 0 1px var(--flaky);       }
     .latest-stat.quarantine-card.active-filter  { box-shadow: 0 0 0 1px var(--quarantine);  }
-    .latest-stat.skip-card.active-filter  { box-shadow: 0 0 0 1px var(--skip); }
+    .latest-stat.regression-card.active-filter  { box-shadow: 0 0 0 1px var(--regression);  }
+    .latest-stat.skip-card.active-filter        { box-shadow: 0 0 0 1px var(--skip);        }
 
     /* Show all filter banner */
     .filter-banner {
@@ -1001,6 +1005,7 @@
     .badge.flaky       { background: var(--flaky-bg);       color: var(--flaky);       }
     .badge.skip        { background: var(--skip-bg);        color: var(--skip);        }
     .badge.quarantine  { background: var(--quarantine-bg);  color: var(--quarantine);  }
+    .badge.regression  { background: var(--regression-bg);  color: var(--regression);  }
 
     .run-card-right {
       display: flex;
@@ -1378,6 +1383,21 @@
       flex-shrink: 0;
     }
 
+    /* ── Regressing badge ───────────────────────────────────── */
+    .regressing-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--regression-bg);
+      color: var(--regression);
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
     /* ── Page views (dashboard / trends / gallery) ──────────── */
     .page-view { display: none; }
     .page-view.active { display: block; }
@@ -1385,7 +1405,7 @@
     /* ── Trends page ────────────────────────────────────────── */
     .trends-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 14px;
       margin-bottom: 28px;
     }
@@ -1960,12 +1980,15 @@ const CONFIG = {
   emptyMessage:     "Run your tests to start tracking history.",
   errorTitle:       "Could not load history",
   errorMessage:     "Make sure history-index.json is in the same directory.",
+  durationRegressionWindow:    10,
+  durationRegressionThreshold: 1.5,
+  durationRegressionMinRuns:   3,
 };
 // ─────────────────────────────────────────────────────────────────────────────
 let runs = [];
 let allTests = [];
 let selectedTestKey = null;
-let activeFilter = null; // 'passed' | 'failed' | 'flaky' | 'skipped' | 'quarantine' | null
+let activeFilter = null; // 'passed' | 'failed' | 'flaky' | 'skipped' | 'quarantine' | 'regressing' | null
 let sidebarTagFilter = null;
 let sidebarSpecFilter = null;
 let currentPage = 'dashboard'; // 'dashboard' | 'trends' | 'gallery' | 'search' | 'quarantine'
@@ -1998,6 +2021,52 @@ function computeP75(durations) {
 }
 
 function isSlowTest(t, p75) { return t.duration > p75 * 1.5; }
+
+// ── Duration regression engine ─────────────────────────────────────────────
+// regressionMap: key `${project}::${title}` → { rollingAvg, sampleCount }
+// Built once per render() from all runs except the latest.
+let regressionMap = new Map();
+
+function buildRegressionMap() {
+  regressionMap = new Map();
+  if (runs.length < 2) return;
+
+  const window_  = CONFIG.durationRegressionWindow    ?? 10;
+  const minRuns  = CONFIG.durationRegressionMinRuns    ?? 3;
+  const latest   = runs[0];
+
+  // Only compute regression for tests present in the latest run
+  const latestKeys = new Set(
+    (latest.allTests ?? [])
+      .filter(t => !t.quarantined && t.status !== 'skipped')
+      .map(t => `${t.project}::${t.title}`)
+  );
+
+  for (const key of latestKeys) {
+    const colonIdx = key.indexOf('::');
+    const project  = key.slice(0, colonIdx);
+    const title    = key.slice(colonIdx + 2);
+
+    const priorRuns = runs.slice(1, 1 + window_);
+    const durations = priorRuns.flatMap(run => {
+      const t = (run.allTests ?? []).find(x => x.project === project && x.title === title);
+      return (t && t.status !== 'skipped' && !t.quarantined && t.duration > 0) ? [t.duration] : [];
+    });
+
+    if (durations.length < minRuns) continue;
+
+    const rollingAvg = durations.reduce((a, b) => a + b, 0) / durations.length;
+    regressionMap.set(key, { rollingAvg, sampleCount: durations.length });
+  }
+}
+
+function isRegressingTest(t) {
+  if (!t || t.quarantined || t.status === 'skipped' || t.duration <= 0) return false;
+  const key  = `${t.project}::${t.title}`;
+  const data = regressionMap.get(key);
+  if (!data) return false;
+  return t.duration > data.rollingAvg * (CONFIG.durationRegressionThreshold ?? 1.5);
+}
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 async function init() {
@@ -2056,6 +2125,7 @@ function render() {
     `${totalRuns} runs · last: ${fmtDate(latest.timestamp)}`;
 
   buildTestIndex();
+  buildRegressionMap();
   renderSidebar();
   renderSidebarFilters();
   const exportBtn = document.getElementById('exportBtn');
@@ -2066,6 +2136,7 @@ function render() {
 }
 
 function renderMainContent(latest, totalRuns, avgPass, latestRate) {
+  const regressingCount = (latest.allTests ?? []).filter(t => isRegressingTest(t)).length;
   document.getElementById('mainContent').innerHTML = `
     <!-- Latest run stat cards -->
     <div class="latest-run-section">
@@ -2102,8 +2173,13 @@ function renderMainContent(latest, totalRuns, avgPass, latestRate) {
           <span class="latest-stat-label">Quarantined</span>
           <span class="latest-stat-value" style="color:${(latest.quarantined??0)>0?'var(--quarantine)':'var(--muted)'}">${latest.quarantined ?? 0}</span>
         </div>
+        <div class="latest-stat regression-card ${regressingCount>0?'clickable':''} ${activeFilter==='regressing'?'active-filter':''}"
+             ${regressingCount>0?`onclick="filterLatestRun('regressing')" title="Filter: regressing"`:''}>
+          <span class="latest-stat-label">Regressing</span>
+          <span class="latest-stat-value" style="color:${regressingCount>0?'var(--regression)':'var(--muted)'}">${regressingCount}</span>
+        </div>
         <div class="latest-stat skip-card ${latest.skipped>0?'clickable':''} ${activeFilter==='skipped'?'active-filter':''}"
-             ${latest.skipped>0?`onclick="filterLatestRun('skipped')" title="Filter: skipped"`:''}> 
+             ${latest.skipped>0?`onclick="filterLatestRun('skipped')" title="Filter: skipped"`:''}>
           <span class="latest-stat-label">Skipped</span>
           <span class="latest-stat-value" style="color:var(--muted)">${latest.skipped}</span>
         </div>
@@ -2318,6 +2394,24 @@ function renderTrendsPage() {
     return allT.filter(t => isSlowTest(t, p75)).length;
   });
 
+  const tWindow    = CONFIG.durationRegressionWindow    ?? 10;
+  const tMinRuns   = CONFIG.durationRegressionMinRuns   ?? 3;
+  const tThreshold = CONFIG.durationRegressionThreshold ?? 1.5;
+  const regressingCnts = display.map(r => {
+    const fullIdx = runs.findIndex(x => x.runId === r.runId);
+    if (fullIdx < 0) return 0;
+    return (r.allTests ?? []).filter(t => {
+      if (t.quarantined || t.status === 'skipped' || t.duration <= 0) return false;
+      const prior = runs.slice(fullIdx + 1, fullIdx + 1 + tWindow).flatMap(pr => {
+        const x = (pr.allTests ?? []).find(x => x.project === t.project && x.title === t.title);
+        return (x && x.status !== 'skipped' && x.duration > 0) ? [x.duration] : [];
+      });
+      if (prior.length < tMinRuns) return false;
+      const avg = prior.reduce((a, b) => a + b, 0) / prior.length;
+      return t.duration > avg * tThreshold;
+    }).length;
+  });
+
   el.innerHTML = `
     <div class="section-header" style="margin-bottom:20px">
       <span class="section-title">Trends · last ${display.length} runs</span>
@@ -2327,6 +2421,7 @@ function renderTrendsPage() {
       ${buildTrendMiniPanel('Duration', durations, display, v => fmtDur(v), 'var(--accent)', false)}
       ${buildTrendMiniPanel('Flaky tests', flakyCnts, display, v => v+'', 'var(--flaky)', false)}
       ${buildTrendMiniPanel('Slow tests', slowCnts, display, v => v+'', '#a78bfa', false)}
+      ${buildTrendMiniPanel('Regressing', regressingCnts, display, v => v+'', 'var(--regression)', false)}
     </div>`;
 }
 
@@ -2924,6 +3019,10 @@ function renderTestDetail(project, title) {
   const flaky       = historyAsc.filter(h => h.status === 'flaky').length;
   const rate        = historyAsc.length ? (passed / historyAsc.length * 100).toFixed(1) : 0;
   const isQuarantined = historyDesc.some(h => h.quarantined);
+  const detailKey     = `${project}::${title}`;
+  const regrData      = regressionMap.get(detailKey);
+  const isRegressing  = !!(historyDesc[0] && regrData &&
+    historyDesc[0].duration > regrData.rollingAvg * (CONFIG.durationRegressionThreshold ?? 1.5));
 
   // Pull annotations from the most recent run that has them
   const annotations = historyDesc.find(h => h.annotations?.length)?.annotations ?? [];
@@ -2941,6 +3040,7 @@ function renderTestDetail(project, title) {
           <div class="test-detail-name" style="display:flex;align-items:center;gap:8px">
             <span>${esc(title)}</span>
             ${isQuarantined ? `<span class="badge quarantine">quarantined</span>` : ''}
+            ${isRegressing  ? `<span class="regressing-badge">REGRESSING</span>`  : ''}
           </div>
           ${metaAnnots.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
             ${metaAnnots.map(a => `<span class="tag" style="background:rgba(124,159,255,.12);color:var(--accent2);border-color:rgba(124,159,255,.2)">${esc(a.type)}${a.description ? ': ' + esc(a.description) : ''}</span>`).join('')}
@@ -2963,6 +3063,10 @@ function renderTestDetail(project, title) {
             <div class="test-detail-stat-value" style="color:${rate>=80?'var(--pass)':rate>=50?'var(--flaky)':'var(--fail)'}">${rate}<span style="font-size:14px">%</span></div>
             <div class="test-detail-stat-label">pass rate</div>
           </div>
+          ${regrData ? `<div class="test-detail-stat">
+            <div class="test-detail-stat-value" style="color:${isRegressing?'var(--regression)':'var(--muted)'};font-size:16px">${fmtDur(Math.round(regrData.rollingAvg))}</div>
+            <div class="test-detail-stat-label">rolling avg</div>
+          </div>` : ''}
         </div>
       </div>
 
@@ -3063,14 +3167,37 @@ function buildDurationPanel(historyAsc) {
     pts.map(p => `L${p[0]},${p[1]}`).join(' ') +
     ` L${pts[pts.length-1][0]},${H} Z`;
 
-  // Colour the line by whether the test was passing or failing each run
-  // Segment approach: draw individual coloured dots per point
-  const dots = pts.map(([x, y, h]) => {
-    const c = h.status === 'passed' ? 'var(--pass)'
+  // Rolling average reference line — avg of up to `window_` prior samples at each point
+  const rWindow    = CONFIG.durationRegressionWindow    ?? 10;
+  const rMinRuns   = CONFIG.durationRegressionMinRuns   ?? 3;
+  const rThreshold = CONFIG.durationRegressionThreshold ?? 1.5;
+  const avgPts = historyAsc.map((h, i) => {
+    if (i === 0) return null;
+    const prior = historyAsc.slice(Math.max(0, i - rWindow), i)
+      .filter(x => x.status !== 'skipped' && x.duration > 0);
+    if (prior.length < rMinRuns) return null;
+    const avg = prior.reduce((s, x) => s + x.duration, 0) / prior.length;
+    const x = (i / (historyAsc.length - 1)) * W;
+    const y = H - ((avg - minD) / range) * (H - 8) - 4;
+    return { x: x.toFixed(1), y: y.toFixed(1), avg, exceeded: h.duration > avg * rThreshold };
+  });
+  const avgPolylineStr = avgPts.filter(Boolean).map(p => `${p.x},${p.y}`).join(' ');
+  const avgLineSvg = avgPolylineStr
+    ? `<polyline points="${avgPolylineStr}" fill="none" stroke="var(--regression)"
+         stroke-width="1" stroke-dasharray="3,3" stroke-opacity=".7"/>`
+    : '';
+
+  // Colour dots — amber when exceeding rolling avg threshold
+  const dots = pts.map(([x, y, h], i) => {
+    const ap = avgPts[i];
+    const exceeded = ap?.exceeded ?? false;
+    const c = exceeded         ? 'var(--regression)'
+            : h.status === 'passed' ? 'var(--pass)'
             : h.status === 'flaky'  ? 'var(--flaky)'
             : 'var(--fail)';
-    return `<circle cx="${x}" cy="${y}" r="3" fill="${c}">
-      <title>${fmtDur(h.duration)} · ${h.status} · ${fmtDate(h.ts)}</title>
+    const avgLabel = ap ? ` · avg ${fmtDur(Math.round(ap.avg))}` : '';
+    return `<circle cx="${x}" cy="${y}" r="${exceeded ? 4 : 3}" fill="${c}">
+      <title>${fmtDur(h.duration)} · ${h.status} · ${fmtDate(h.ts)}${avgLabel}</title>
     </circle>`;
   }).join('');
 
@@ -3079,9 +3206,10 @@ function buildDurationPanel(historyAsc) {
   const prev = durations[durations.length - 2];
   const deltaPct = ((last - prev) / prev * 100);
   const deltaSign = deltaPct > 5 ? 'up' : deltaPct < -5 ? 'down' : 'flat';
-  const deltaLabel = deltaSign === 'flat'
-    ? '~ stable'
-    : `${deltaPct > 0 ? '+' : ''}${deltaPct.toFixed(0)}% vs prev`;
+  const lastAvgPt = avgPts.filter(Boolean).at(-1);
+  const regressingLatest = lastAvgPt?.exceeded ?? false;
+  const deltaLabel = (deltaSign === 'flat' ? '~ stable' : `${deltaPct > 0 ? '+' : ''}${deltaPct.toFixed(0)}% vs prev`)
+    + (regressingLatest ? ' · ⚠ regressing' : '');
 
   return `
     <div class="detail-sub-panel">
@@ -3100,6 +3228,7 @@ function buildDurationPanel(historyAsc) {
           <path d="${areaPath}" fill="url(#tdGrad)"/>
           <polyline points="${polyline}" fill="none" stroke="var(--accent)" stroke-width="1.5"
             stroke-linejoin="round" stroke-linecap="round" stroke-opacity=".5"/>
+          ${avgLineSvg}
           ${dots}
         </svg>
       </div>
@@ -3107,6 +3236,7 @@ function buildDurationPanel(historyAsc) {
         <span>min ${fmtDur(minD)}</span>
         <span>avg ${fmtDur(Math.round(durations.reduce((a,b)=>a+b,0)/durations.length))}</span>
         <span>max ${fmtDur(maxD)}</span>
+        ${avgPolylineStr ? `<span style="color:var(--regression)">— rolling avg</span>` : ''}
       </div>
     </div>`;
 }
@@ -3206,7 +3336,14 @@ function renderRunsList() {
     const p75    = computeP75(allT.map(t => t.duration));
 
     const isLatest     = idx === 0;
-    const filteredT    = (isLatest && activeFilter) ? allT.filter(t => activeFilter === 'quarantine' ? t.quarantined : t.status === activeFilter) : allT;
+    const regressingInRun = isLatest ? allT.filter(t => isRegressingTest(t)).length : 0;
+    const filteredT    = (isLatest && activeFilter)
+      ? allT.filter(t => {
+          if (activeFilter === 'quarantine')  return t.quarantined;
+          if (activeFilter === 'regressing')  return isRegressingTest(t);
+          return t.status === activeFilter;
+        })
+      : allT;
     const notable      = filteredT.filter(t => t.status === 'failed' || t.status === 'flaky');
     const displayTests = (isLatest && activeFilter) ? filteredT : notable;
     const hasMore      = !activeFilter && allT.length > notable.length;
@@ -3224,6 +3361,7 @@ function renderRunsList() {
               ${run.flaky       > 0 ? `<span class="badge flaky">${run.flaky} flaky</span>`             : ''}
               ${run.skipped     > 0 ? `<span class="badge skip">${run.skipped} skipped</span>`           : ''}
               ${(run.quarantined??0) > 0 ? `<span class="badge quarantine">${run.quarantined} quarantined</span>` : ''}
+              ${regressingInRun > 0 ? `<span class="badge regression">${regressingInRun} regressing</span>` : ''}
             </div>
           </div>
           <div class="run-card-right">
@@ -3262,15 +3400,17 @@ function renderRunsList() {
 
 function renderTestRows(tests, p75 = 0) {
   return tests.map((t, i) => {
-    const errId = `tre-${i}-${Math.random().toString(36).slice(2,7)}`;
-    const slow  = p75 > 0 && isSlowTest(t, p75);
+    const errId      = `tre-${i}-${Math.random().toString(36).slice(2,7)}`;
+    const slow       = p75 > 0 && isSlowTest(t, p75);
+    const regressing = isRegressingTest(t);
     return `
     <div class="test-row ${statusClass(t.status)}${t.quarantined ? ' quarantine' : ''}">
       <div class="test-row-body">
         <div class="test-row-title" style="display:flex;align-items:center;gap:6px">
           <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
           ${t.quarantined ? `<span class="badge quarantine">quarantined</span>` : ''}
-          ${slow ? `<span class="slow-badge">SLOW</span>` : ''}
+          ${slow       ? `<span class="slow-badge">SLOW</span>`            : ''}
+          ${regressing ? `<span class="regressing-badge">REGRESSING</span>` : ''}
         </div>
         <div class="test-row-meta">
           <span>${esc(t.file)}</span>
