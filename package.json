@@ -21,8 +21,6 @@
     "@changesets/cli": "^2.27.8",
     "eslint": "^10.2.0",
     "install": "^0.13.0",
-    "live-server": "^1.2.2",
-    "npm": "^11.12.1",
     "standard-version": "^9.5.0"
   },
   "engines": {

@@ -1398,6 +1398,155 @@
       flex-shrink: 0;
     }
 
+    /* ── Guided tour ─────────────────────────────────────────── */
+    .tour-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      display: none;
+      pointer-events: none;
+    }
+    .tour-overlay.active { display: block; }
+
+    .tour-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 18, 0.72);
+      z-index: 9001;
+      pointer-events: all;
+    }
+
+    .tour-spotlight {
+      position: fixed;
+      z-index: 9002;
+      border-radius: 10px;
+      box-shadow: 0 0 0 9999px rgba(8,10,18,.72);
+      pointer-events: none;
+      outline: 1.5px solid rgba(91,124,246,.55);
+      transition:
+        top    .32s cubic-bezier(.4,0,.2,1),
+        left   .32s cubic-bezier(.4,0,.2,1),
+        width  .32s cubic-bezier(.4,0,.2,1),
+        height .32s cubic-bezier(.4,0,.2,1);
+    }
+
+    .tour-card {
+      position: fixed;
+      z-index: 9003;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 20px 20px 16px;
+      width: 300px;
+      box-shadow: 0 20px 48px rgba(0,0,0,.45);
+      transition:
+        top  .32s cubic-bezier(.4,0,.2,1),
+        left .32s cubic-bezier(.4,0,.2,1);
+      pointer-events: all;
+    }
+
+    .tour-card-step {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent2);
+      margin-bottom: 8px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .tour-card-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .tour-card-body {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    .tour-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tour-skip {
+      margin-right: auto;
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 0;
+      font-family: var(--sans);
+    }
+    .tour-skip:hover { color: var(--text); }
+
+    .tour-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--sans);
+      border: none;
+      line-height: 1.4;
+    }
+    .tour-btn.primary { background: var(--accent); color: #fff; }
+    .tour-btn.primary:hover { opacity: .88; }
+    .tour-btn.ghost { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    .tour-btn.ghost:hover { color: var(--text); }
+
+    /* Help button in topbar */
+    .tour-help-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+      background: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      flex-shrink: 0;
+    }
+    .tour-help-btn:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── Failure-point badges ────────────────────────────────── */
+    .same-point-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(245,166,35,.15);
+      color: var(--flaky);
+      flex-shrink: 0;
+    }
+    .diff-point-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(34,211,238,.12);
+      color: #22d3ee;
+      flex-shrink: 0;
+    }
+
     /* ── Page views (dashboard / trends / gallery) ──────────── */
     .page-view { display: none; }
     .page-view.active { display: block; }
@@ -1864,12 +2013,29 @@
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
       Export PDF
     </button>
+    <button class="tour-help-btn" onclick="startTour()" title="Start guided tour">?</button>
     <div class="theme-toggle" id="theme-toggle">
   <button data-theme="system" class="theme-btn active">System</button>
   <button data-theme="dark" class="theme-btn">Dark</button>
   <button data-theme="light" class="theme-btn">Light</button>
 </div>
   </header>
+
+  <!-- Guided tour overlay -->
+  <div class="tour-overlay" id="tourOverlay">
+    <div class="tour-backdrop" onclick="endTour()"></div>
+    <div class="tour-spotlight" id="tourSpotlight"></div>
+    <div class="tour-card" id="tourCard">
+      <div class="tour-card-step" id="tourStepLabel"></div>
+      <div class="tour-card-title" id="tourTitle"></div>
+      <div class="tour-card-body"  id="tourBody"></div>
+      <div class="tour-card-actions">
+        <button class="tour-skip" onclick="endTour()">Skip tour</button>
+        <button class="tour-btn ghost"   id="tourPrev" onclick="prevTourStep()">← Back</button>
+        <button class="tour-btn primary" id="tourNext" onclick="nextTourStep()">Next →</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Hidden print report (populated by exportPDF(), visible only during print) -->
   <div id="printReport"></div>
@@ -2068,6 +2234,273 @@ function isRegressingTest(t) {
   return t.duration > data.rollingAvg * (CONFIG.durationRegressionThreshold ?? 1.5);
 }
 
+// ── Demo / fallback data ───────────────────────────────────────────────────
+// Loaded when history-index.json is not found (e.g. opening the HTML directly).
+// Includes three tests specifically designed to show the failure-point feature:
+//   1. "User can log in"         — always fails at the SAME place (SAME POINT badge)
+//   2. "Search returns results"  — fails at DIFFERENT places each time (NEW POINT badge)
+//   3. "Checkout flow"           — recently CHANGED failure point (NEW POINT on latest run)
+const DEMO_RUNS = (() => {
+  const p = (title, file, duration, status, error) => ({
+    title, file, project: 'chromium', duration, status,
+    error: error ?? undefined, tags: [], annotations: [], artifacts: {},
+  });
+  const stable = (dur) => [
+    p('User profile page loads correctly',   'tests/profile.spec.ts',        dur + 230,  'passed'),
+    p('Dashboard overview renders',          'tests/dashboard.spec.ts',      dur - 15,   'passed'),
+    p('Notifications are displayed',         'tests/notifications.spec.ts',  dur + 450,  'passed'),
+    p('API health check returns 200',        'tests/api.spec.ts',            dur - 680,  'passed'),
+    p('Password reset email is sent',        'tests/auth.spec.ts',           dur + 100,  'passed'),
+    p('User can update account settings',    'tests/settings.spec.ts',       dur + 680,  'passed'),
+    p('Session expires after timeout',       'tests/auth.spec.ts',           dur + 1200, 'passed'),
+  ];
+
+  const LOGIN_ERROR = (ms) =>
+    `TimeoutError: Waiting for locator('.dashboard-header') to be visible exceeded timeout of ${ms}ms\n    at expect(page.locator('.dashboard-header')).toBeVisible() (tests/auth.spec.ts:34:5)`;
+  const SEARCH_TIMEOUT_ERROR =
+    `TimeoutError: page.waitForSelector('.search-results') exceeded timeout of 5000ms\n    at SearchPage.waitForResults (tests/search.spec.ts:22:3)`;
+  const SEARCH_ASSERT_ERROR =
+    `AssertionError: expect(received).toHaveText(expected)\nExpected: "42 results found"\nReceived: "39 results found"\n    at expect(page.locator('.result-count')).toHaveText() (tests/search.spec.ts:28:5)`;
+  const CHECKOUT_NEW_ERROR =
+    `Error: expect(received).toBeVisible()\n\nLocator: locator('#order-confirmation')\n    at expect(page.locator('#order-confirmation')).toBeVisible() (tests/checkout.spec.ts:67:5)`;
+  const CHECKOUT_OLD_ERROR =
+    `Error: expect(received).toContainText()\n\nLocator: locator('.payment-summary')\nExpected string: "Visa ending in 4242"\nReceived string: "No payment method on file"\n    at expect(page.locator('.payment-summary')).toContainText() (tests/checkout.spec.ts:51:5)`;
+
+  const mkRun = (runId, timestamp, tests) => {
+    const passed  = tests.filter(t => t.status === 'passed').length;
+    const failed  = tests.filter(t => t.status === 'failed').length;
+    const flaky   = tests.filter(t => t.status === 'flaky').length;
+    const skipped = tests.filter(t => t.status === 'skipped').length;
+    const duration = tests.reduce((s, t) => s + t.duration, 0) + 800;
+    return { runId, timestamp, duration, totalTests: tests.length, passed, failed, flaky, skipped, quarantined: 0, allTests: tests, failedTests: tests.filter(t => t.status !== 'passed') };
+  };
+
+  return [
+    // Run 1 — newest (2026-04-05): login flaky (SAME POINT), search flaky (NEW POINT), checkout failed (NEW POINT — location changed)
+    mkRun('2026-04-05T09-00-00-000Z', '2026-04-05T09:00:00.000Z', [
+      p('User can log in with valid credentials', 'tests/auth.spec.ts',     4200, 'flaky',  LOGIN_ERROR(10000)),
+      p('Search returns relevant results',        'tests/search.spec.ts',   6800, 'flaky',  SEARCH_TIMEOUT_ERROR),
+      p('Checkout flow completes order',          'tests/checkout.spec.ts', 8100, 'failed', CHECKOUT_NEW_ERROR),
+      ...stable(1000),
+    ]),
+    // Run 2 — 2026-04-04: login passed, search passed, checkout failed (SAME POINT as run 3)
+    mkRun('2026-04-04T09-00-00-000Z', '2026-04-04T09:00:00.000Z', [
+      p('User can log in with valid credentials', 'tests/auth.spec.ts',     1850, 'passed'),
+      p('Search returns relevant results',        'tests/search.spec.ts',   2100, 'passed'),
+      p('Checkout flow completes order',          'tests/checkout.spec.ts', 7900, 'failed', CHECKOUT_OLD_ERROR),
+      ...stable(1050),
+    ]),
+    // Run 3 — 2026-04-02: login flaky (SAME POINT as run 4), search flaky (different error from run 1), checkout failed (oldest — no badge)
+    mkRun('2026-04-02T09-00-00-000Z', '2026-04-02T09:00:00.000Z', [
+      p('User can log in with valid credentials', 'tests/auth.spec.ts',     3900, 'flaky',  LOGIN_ERROR(8000)),
+      p('Search returns relevant results',        'tests/search.spec.ts',   5200, 'flaky',  SEARCH_ASSERT_ERROR),
+      p('Checkout flow completes order',          'tests/checkout.spec.ts', 8300, 'failed', CHECKOUT_OLD_ERROR),
+      ...stable(980),
+    ]),
+    // Run 4 — 2026-04-01: login flaky (oldest login failure — no badge), search passed, checkout passed
+    mkRun('2026-04-01T09-00-00-000Z', '2026-04-01T09:00:00.000Z', [
+      p('User can log in with valid credentials', 'tests/auth.spec.ts',     4500, 'flaky',  LOGIN_ERROR(12000)),
+      p('Search returns relevant results',        'tests/search.spec.ts',   2300, 'passed'),
+      p('Checkout flow completes order',          'tests/checkout.spec.ts', 2600, 'passed'),
+      ...stable(1020),
+    ]),
+    // Run 5 — oldest (2026-03-30): all green
+    mkRun('2026-03-30T09-00-00-000Z', '2026-03-30T09:00:00.000Z', [
+      p('User can log in with valid credentials', 'tests/auth.spec.ts',     1920, 'passed'),
+      p('Search returns relevant results',        'tests/search.spec.ts',   2150, 'passed'),
+      p('Checkout flow completes order',          'tests/checkout.spec.ts', 2450, 'passed'),
+      ...stable(1010),
+    ]),
+  ];
+})();
+
+// ── Guided tour ────────────────────────────────────────────────────────────
+const TOUR_STEPS = [
+  {
+    target: null,
+    position: 'center',
+    title: 'Welcome to your test dashboard',
+    body: 'This quick tour walks you through each section so you know exactly where to look. You can replay it any time using the ? button in the top bar.',
+  },
+  {
+    target: '.latest-run-section',
+    position: 'bottom',
+    title: 'Latest run — at a glance',
+    body: 'Each card shows a count for that status in the most recent run. Click a card to filter the list below — e.g. click "flaky" to see only flaky tests from this run.',
+    beforeStep: () => {
+      if (currentPage !== 'dashboard') navTo('dashboard', document.getElementById('nav-dashboard'));
+    },
+  },
+  {
+    target: '#runsList',
+    position: 'top',
+    title: 'Run history',
+    body: 'Every run appears here, newest first. Expand a run to see failing and flaky tests, read the error message, and download trace or screenshot artifacts.',
+    beforeStep: () => {
+      if (currentPage !== 'dashboard') navTo('dashboard', document.getElementById('nav-dashboard'));
+    },
+  },
+  {
+    target: '#sidebar',
+    position: 'right',
+    title: 'Navigation',
+    body: 'Five views live here:\n• Dashboard — run history & stat cards\n• Trends — charts over time\n• Search tests — per-test drill-down\n• Gallery — all failure screenshots\n• Quarantine — sidelined tests',
+  },
+  {
+    target: '#sidebarFilters',
+    position: 'right',
+    title: 'Filters',
+    body: 'Click a test file or tag to jump to the per-test view pre-filtered to that group. Click the same chip again to clear the filter.',
+  },
+  {
+    target: '#nav-trends',
+    position: 'right',
+    title: 'Trends',
+    body: 'Charts for pass rate, flakiness, slow-test count, and duration regression across all stored runs. Hover a data point to see the exact value.',
+  },
+  {
+    target: '#nav-search',
+    position: 'right',
+    title: 'Per-test history',
+    body: 'Select any test to see its full run-by-run history, duration chart, and top failure reasons.\n\nNEW POINT and SAME POINT badges appear on each failure row — they tell you whether the test failed at the same code location as last time or moved to a new one.',
+  },
+  {
+    target: '#nav-gallery',
+    position: 'right',
+    title: 'Screenshot gallery',
+    body: 'All failure screenshots in one scrollable grid. Useful for spotting visual regressions without having to open each run individually.',
+  },
+  {
+    target: '#nav-quarantine',
+    position: 'right',
+    title: 'Quarantine',
+    body: 'Tests tagged @quarantine are excluded from the suite health grade. Monitor them here to know when they\'re stable enough to un-quarantine and re-enable.',
+  },
+  {
+    target: () => {
+      // Span both export buttons as one logical target
+      const csv = document.getElementById('exportCsvWrap');
+      const pdf = document.getElementById('exportBtn');
+      if (!csv || !pdf) return document.getElementById('exportBtn');
+      const a = csv.getBoundingClientRect();
+      const b = pdf.getBoundingClientRect();
+      return {
+        getBoundingClientRect: () => ({
+          top: Math.min(a.top, b.top),
+          left: Math.min(a.left, b.left),
+          right: Math.max(a.right, b.right),
+          bottom: Math.max(a.bottom, b.bottom),
+          width:  Math.max(a.right, b.right)  - Math.min(a.left, b.left),
+          height: Math.max(a.bottom, b.bottom) - Math.min(a.top, b.top),
+        }),
+      };
+    },
+    position: 'bottom',
+    title: 'Export & share',
+    body: 'Export PDF generates a printable summary report. Export CSV downloads test results as a spreadsheet — useful for attaching to CI artifacts or sharing with stakeholders.',
+  },
+];
+
+let tourStepIdx = 0;
+
+window.startTour = function() {
+  tourStepIdx = 0;
+  document.getElementById('tourOverlay').classList.add('active');
+  goToTourStep(0);
+};
+
+window.endTour = function() {
+  document.getElementById('tourOverlay').classList.remove('active');
+  document.getElementById('tourSpotlight').style.display = 'none';
+  localStorage.setItem('pw-reporter-tour-done', '1');
+};
+
+window.nextTourStep = function() {
+  if (tourStepIdx >= TOUR_STEPS.length - 1) { endTour(); return; }
+  tourStepIdx++;
+  goToTourStep(tourStepIdx);
+};
+
+window.prevTourStep = function() {
+  if (tourStepIdx <= 0) return;
+  tourStepIdx--;
+  goToTourStep(tourStepIdx);
+};
+
+function goToTourStep(idx) {
+  const step       = TOUR_STEPS[idx];
+  const overlay    = document.getElementById('tourOverlay');
+  const spotlight  = document.getElementById('tourSpotlight');
+  const card       = document.getElementById('tourCard');
+
+  if (!overlay.classList.contains('active')) return;
+  if (step.beforeStep) step.beforeStep();
+
+  document.getElementById('tourStepLabel').textContent = `Step ${idx + 1} of ${TOUR_STEPS.length}`;
+  document.getElementById('tourTitle').textContent     = step.title;
+  // Support \n line breaks in body
+  const bodyEl = document.getElementById('tourBody');
+  bodyEl.innerHTML = step.body.split('\n').map(l => l ? `<span>${esc(l)}</span>` : '<br>').join('<br>');
+  document.getElementById('tourPrev').style.display   = idx === 0 ? 'none' : '';
+  document.getElementById('tourNext').textContent     = idx === TOUR_STEPS.length - 1 ? 'Done ✓' : 'Next →';
+
+  // Resolve target element
+  let target = step.target;
+  if (typeof target === 'function') target = target();
+  if (typeof target === 'string')   target = document.querySelector(target);
+
+  if (!target || step.position === 'center') {
+    spotlight.style.display = 'none';
+    positionTourCard(card, null, 'center');
+  } else {
+    const rect = typeof target.getBoundingClientRect === 'function'
+      ? target.getBoundingClientRect()
+      : null;
+    if (!rect) { spotlight.style.display = 'none'; positionTourCard(card, null, 'center'); return; }
+    const pad = 8;
+    spotlight.style.display  = 'block';
+    spotlight.style.top      = `${rect.top    - pad}px`;
+    spotlight.style.left     = `${rect.left   - pad}px`;
+    spotlight.style.width    = `${rect.width  + pad * 2}px`;
+    spotlight.style.height   = `${rect.height + pad * 2}px`;
+    positionTourCard(card, rect, step.position);
+  }
+}
+
+function positionTourCard(card, rect, position) {
+  const cardW  = 300;
+  const cardH  = card.offsetHeight || 220;
+  const vw     = window.innerWidth;
+  const vh     = window.innerHeight;
+  const margin = 16;
+  const gap    = 14;
+
+  if (!rect || position === 'center') {
+    card.style.left = `${Math.max(margin, (vw - cardW) / 2)}px`;
+    card.style.top  = `${Math.max(margin, (vh - cardH) / 2)}px`;
+    return;
+  }
+
+  let top, left;
+  if (position === 'bottom') {
+    top  = rect.bottom + gap;
+    left = rect.left + (rect.width - cardW) / 2;
+  } else if (position === 'top') {
+    top  = rect.top - cardH - gap;
+    left = rect.left + (rect.width - cardW) / 2;
+  } else if (position === 'right') {
+    top  = rect.top + (rect.height - cardH) / 2;
+    left = rect.right + gap;
+  } else { // left
+    top  = rect.top + (rect.height - cardH) / 2;
+    left = rect.left - cardW - gap;
+  }
+
+  // Clamp to viewport
+  card.style.left = `${Math.max(margin, Math.min(vw - cardW - margin, left))}px`;
+  card.style.top  = `${Math.max(margin, Math.min(vh - cardH - margin, top))}px`;
+}
+
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 async function init() {
   // Apply config values that need JS to set
@@ -2088,8 +2521,16 @@ async function init() {
     if (!data.runs?.length) { renderEmpty(); return; }
     runs = data.runs;
     render();
+    requestAnimationFrame(() => { if (!localStorage.getItem('pw-reporter-tour-done')) startTour(); });
   } catch {
-    renderError();
+    // No history-index.json found — show embedded demo data so the dashboard is
+    // immediately explorable. Once the user runs their own tests and generates
+    // history-index.json, this branch is never reached and only real data is shown.
+    runs = DEMO_RUNS;
+    render();
+    const meta = document.getElementById('topbarMeta');
+    if (meta) meta.innerHTML += ' &nbsp;<span style="font-family:var(--mono);font-size:10px;font-weight:600;background:rgba(124,159,255,.15);color:var(--accent2);padding:1px 6px;border-radius:4px;letter-spacing:.05em">DEMO</span>';
+    requestAnimationFrame(() => { if (!localStorage.getItem('pw-reporter-tour-done')) startTour(); });
   }
 }
 
@@ -2353,29 +2794,39 @@ function renderSidebarFilters() {
       </div>` : ''}`;
 }
 
+function applyTestFilter(value) {
+  // If already on dashboard or search, the test grid is already in the DOM —
+  // just switch to the per-test tab and filter directly, no re-render needed.
+  // If on another page (trends, gallery, quarantine), navigate to dashboard first.
+  const doFilter = () => {
+    const input = document.getElementById('testSearch');
+    if (!input) return;
+    input.value = value ?? '';
+    const testBtn = document.querySelectorAll('.tab-btn')[1];
+    if (testBtn) switchTab('test', testBtn);
+    filterTests();
+  };
+
+  if (currentPage === 'dashboard' || currentPage === 'search') {
+    doFilter();
+  } else {
+    navTo('dashboard', document.getElementById('nav-dashboard'));
+    setTimeout(doFilter, 60);
+  }
+}
+
 window.toggleTagFilter = function(tag) {
   sidebarTagFilter = sidebarTagFilter === tag ? null : tag;
   sidebarSpecFilter = null;
   renderSidebarFilters();
-  // Switch to search view and apply filter
-  const searchBtn = document.getElementById('nav-search');
-  if (searchBtn) navTo('search', searchBtn);
-  setTimeout(() => {
-    const input = document.getElementById('testSearch');
-    if (input) { input.value = tag; filterTests(); }
-  }, 80);
+  applyTestFilter(sidebarTagFilter);
 };
 
 window.toggleSpecFilter = function(spec) {
   sidebarSpecFilter = sidebarSpecFilter === spec ? null : spec;
   sidebarTagFilter = null;
   renderSidebarFilters();
-  const searchBtn = document.getElementById('nav-search');
-  if (searchBtn) navTo('search', searchBtn);
-  setTimeout(() => {
-    const input = document.getElementById('testSearch');
-    if (input) { input.value = spec; filterTests(); }
-  }, 80);
+  applyTestFilter(sidebarSpecFilter);
 };
 
 // ── Trends page ────────────────────────────────────────────────────────────
@@ -2669,13 +3120,27 @@ window.closeLightbox = function() {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
+// ── Failure-point normalization ────────────────────────────────────────────
+// Shared key used both for recurring-failure grouping and same-point detection.
+// Strips numbers, quoted strings and trims to 80 chars so the same logical
+// error groups together even when line numbers or values differ between runs.
+function normalizeErrorKey(error) {
+  if (!error) return null;
+  return error.split('\n')[0]
+    .replace(/\d+/g, 'N')
+    .replace(/'.+?'/g, "'…'")
+    .replace(/".+?"/g, '"…"')
+    .trim()
+    .substring(0, 80);
+}
+
 // ── PDF export ─────────────────────────────────────────────────────────────
 function buildRecurringFailures() {
   const counts = new Map();
   runs.forEach(run => {
     (run.allTests ?? []).filter(t => t.status === 'failed' || t.status === 'flaky').forEach(t => {
       if (!t.error) return;
-      const key = t.error.split('\n')[0].replace(/\d+/g,'N').replace(/'.+?'/g,"'…'").replace(/".+?"/g,'"…"').trim().substring(0, 72);
+      const key = normalizeErrorKey(t.error);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     });
   });
@@ -2912,6 +3377,12 @@ window.switchTab = function(view, btn) {
   const tv = document.getElementById('testView');
   tv.style.display = view === 'test' ? 'block' : 'none';
   if (view === 'test') tv.classList.add('active');
+
+  // Keep sidebar nav in sync with which tab is active
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  const navId = view === 'test' ? 'nav-search' : 'nav-dashboard';
+  document.getElementById(navId)?.classList.add('active');
+  currentPage = view === 'test' ? 'search' : 'dashboard';
 };
 
 // ── Test index & grid ──────────────────────────────────────────────────────
@@ -2920,7 +3391,7 @@ function buildTestIndex() {
   runs.forEach(run => {
     (run.allTests ?? []).forEach(t => {
       const key = `${t.project}::${t.title}`;
-      if (!seen.has(key)) seen.set(key, { title: t.title, project: t.project, tags: t.tags ?? [], quarantined: !!t.quarantined, key });
+      if (!seen.has(key)) seen.set(key, { title: t.title, file: t.file ?? '', project: t.project, tags: t.tags ?? [], quarantined: !!t.quarantined, key });
       else if (t.quarantined) seen.get(key).quarantined = true;
     });
   });
@@ -2979,9 +3450,10 @@ function renderTestGrid(tests) {
 
 window.filterTests = function() {
   const q = document.getElementById('testSearch').value.toLowerCase();
-  const filtered = allTests.filter(t =>
+  const filtered = !q ? allTests : allTests.filter(t =>
     t.title.toLowerCase().includes(q) ||
     t.project.toLowerCase().includes(q) ||
+    (t.file ?? '').toLowerCase().includes(q) ||
     t.tags.some(g => g.toLowerCase().includes(q))
   );
   renderTestGrid(filtered);
@@ -3023,6 +3495,24 @@ function renderTestDetail(project, title) {
   const regrData      = regressionMap.get(detailKey);
   const isRegressing  = !!(historyDesc[0] && regrData &&
     historyDesc[0].duration > regrData.rollingAvg * (CONFIG.durationRegressionThreshold ?? 1.5));
+
+  // Failure-point comparison (newest-first scan).
+  // For each failed/flaky entry, compare its normalized error key against the nearest
+  // older failure to answer: "did this test fail at the same place as last time?"
+  //   true  → SAME POINT  (consistent failure location)
+  //   false → NEW POINT   (failure moved to a different location)
+  //   null  → not a failure, or the oldest failure in history (no prior to compare)
+  const failureKeys = historyDesc.map(h =>
+    (h.status === 'failed' || h.status === 'flaky') ? normalizeErrorKey(h.error) : null
+  );
+  const samePointFlags = historyDesc.map((h, i) => {
+    if (h.status !== 'failed' && h.status !== 'flaky') return null;
+    const myKey = failureKeys[i];
+    for (let j = i + 1; j < failureKeys.length; j++) {
+      if (failureKeys[j] !== null) return myKey === failureKeys[j];
+    }
+    return null; // no prior failure to compare against
+  });
 
   // Pull annotations from the most recent run that has them
   const annotations = historyDesc.find(h => h.annotations?.length)?.annotations ?? [];
@@ -3084,17 +3574,23 @@ function renderTestDetail(project, title) {
       </div>
 
       <!-- Per-run history list -->
-      ${historyDesc.map((h, i) => renderTrendRow(h, i)).join('')}
+      ${historyDesc.map((h, i) => renderTrendRow(h, i, samePointFlags[i])).join('')}
     </div>`;
 
   detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderTrendRow(h, i) {
+function renderTrendRow(h, i, samePoint = null) {
   const hasError    = !!(h.error);
   const annotTitle  = h.annotations?.find(a => a.type === 'title')?.description ?? null;
   const hasDetail   = hasError || annotTitle;
   const rowId       = `tr-${i}-${Date.now()}`;
+
+  const samePointBadge = samePoint === true
+    ? `<span class="same-point-badge" title="Failure at the same location as the previous failure">SAME POINT</span>`
+    : samePoint === false
+      ? `<span class="diff-point-badge" title="Failure at a different location than the previous failure">NEW POINT</span>`
+      : '';
 
   return `
     <div class="trend-row ${statusClass(h.status)}${h.quarantined ? ' quarantine' : ''}${hasDetail ? ' has-detail' : ''}" id="${rowId}">
@@ -3106,6 +3602,7 @@ function renderTrendRow(h, i) {
         <div class="trend-row-right">
           <div class="trend-row-dur">${fmtDur(h.duration)}</div>
           <div class="trend-row-status" style="color:${statusColor(h.status)}">${h.status}</div>
+          ${samePointBadge}
           ${hasDetail ? `<span class="trend-row-chevron" id="chev-${rowId}">▼</span>` : '<span style="width:14px"></span>'}
         </div>
       </div>
@@ -3256,15 +3753,7 @@ function buildFailureReasonsPanel(historyAsc) {
   // so the same logical error groups together even if the stack changes slightly
   const counts = new Map();
   for (const h of failures) {
-    const raw = h.error ?? '(no error message)';
-    // Normalise: first line only, collapse numbers, trim path prefixes
-    const key = raw
-      .split('\n')[0]
-      .replace(/\d+/g, 'N')          // collapse all numbers → N
-      .replace(/'.+?'/g, "'…'")      // collapse quoted strings
-      .replace(/".+?"/g, '"…"')
-      .trim()
-      .substring(0, 80);
+    const key = normalizeErrorKey(h.error ?? '(no error message)') ?? '';
     const prev = counts.get(key) ?? { count: 0, isFlaky: false };
     counts.set(key, {
       count: prev.count + 1,
