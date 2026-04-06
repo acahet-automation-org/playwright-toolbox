@@ -2777,7 +2777,7 @@ function renderSidebarFilters() {
       <div class="sidebar-chips">
         ${tags.map(([tag, cnt]) => `
           <div class="sidebar-chip ${sidebarTagFilter===tag?'active':''}"
-               onclick="toggleTagFilter(${JSON.stringify(tag)})">
+               data-tag="${esc(tag)}">
             ${esc(tag)}
             <span class="sidebar-chip-count">${cnt}</span>
           </div>`).join('')}
@@ -2787,11 +2787,18 @@ function renderSidebarFilters() {
       <div class="sidebar-chips">
         ${specs.map(([spec, cnt]) => `
           <div class="sidebar-chip ${sidebarSpecFilter===spec?'active':''}"
-               onclick="toggleSpecFilter(${JSON.stringify(spec)})">
+               data-spec="${esc(spec)}">
             ${esc(spec)}
             <span class="sidebar-chip-count">${cnt}</span>
           </div>`).join('')}
       </div>` : ''}`;
+
+  el.onclick = function(e) {
+    const tagChip  = e.target.closest('.sidebar-chip[data-tag]');
+    if (tagChip)  { toggleTagFilter(tagChip.dataset.tag);   return; }
+    const specChip = e.target.closest('.sidebar-chip[data-spec]');
+    if (specChip) toggleSpecFilter(specChip.dataset.spec);
+  };
 }
 
 function applyTestFilter(value) {
