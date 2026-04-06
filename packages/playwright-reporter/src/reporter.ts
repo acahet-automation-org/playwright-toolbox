@@ -54,6 +54,7 @@ interface HistoryIndex {
 }
 
 const DEFAULT_MAX_RUNS = 30;
+const DEFAULT_HISTORY_DIR = './dashboard/test-history';
 
 export interface ReporterOptions {
 	/** Directory where history-index.json and index.html are written. Default: ./dashboard/test-history */
@@ -75,7 +76,6 @@ export interface ReporterOptions {
 }
 
 class LocalHistoryReporter implements Reporter {
-	private config!: FullConfig;
 	private suite!: Suite;
 	private startTime!: number;
 	private historyDir: string;
@@ -83,6 +83,8 @@ class LocalHistoryReporter implements Reporter {
 	private maxRuns: number;
 	private currentRunId!: string;
 	private currentRunDir!: string;
+
+	private usingDefaultHistoryDir: boolean;
 
 	// Dashboard display options — written into index.html after every run
 	private projectName: string;
@@ -93,7 +95,7 @@ class LocalHistoryReporter implements Reporter {
 	private durationRegressionMinRuns: number;
 
 	constructor(options: ReporterOptions = {}) {
-		this.historyDir    = options.historyDir    ?? './dashboard/test-history';
+		this.historyDir    = options.historyDir    ?? DEFAULT_HISTORY_DIR;
 		this.maxRuns       = options.maxRuns       ?? DEFAULT_MAX_RUNS;
 		this.projectName   = options.projectName   ?? '';
 		this.brandName     = options.brandName     ?? 'pw_dashboard';
@@ -102,16 +104,17 @@ class LocalHistoryReporter implements Reporter {
 		this.durationRegressionThreshold = options.durationRegressionThreshold ?? 1.5;
 		this.durationRegressionMinRuns   = options.durationRegressionMinRuns   ?? 3;
 		this.historyIndexFile = `${this.historyDir}/history-index.json`;
+		this.usingDefaultHistoryDir = options.historyDir === undefined;
 	}
 
-	async onBegin(config: FullConfig, suite: Suite) {
-		this.config        = config;
+	async onBegin(_config: FullConfig, suite: Suite) {
 		this.suite         = suite;
 		this.startTime     = Date.now();
 		this.currentRunId  = new Date().toISOString().replace(/[:.]/g, '-');
 		this.currentRunDir = `${this.historyDir}/runs/${this.currentRunId}`;
 
 		await fs.mkdir(this.currentRunDir, { recursive: true });
+		await this.warnIfMisconfigured();
 	}
 
 	async onEnd(_result: FullResult) {
@@ -144,6 +147,61 @@ class LocalHistoryReporter implements Reporter {
 			process.stderr.write(
 				`[LocalHistoryReporter] Failed to save history: ${String(err)}\n`,
 			);
+		}
+	}
+
+	// ─── Startup config validation ───────────────────────────────────────────
+
+	/**
+	 * Prints actionable warnings when the reporter is likely misconfigured:
+	 *
+	 * 1. Using the default historyDir — reminds the user to pin it explicitly
+	 *    so changing it later won't orphan historical data.
+	 * 2. Using a custom historyDir that has no history yet, while the default
+	 *    path still contains data — the user probably changed historyDir after
+	 *    runs had already been recorded there.
+	 * 3. projectName is empty — history is still tracked, but the dashboard
+	 *    topbar and any PDF exports will be blank.
+	 */
+	private async warnIfMisconfigured() {
+		const warn = (msg: string) =>
+			process.stderr.write(`[LocalHistoryReporter] WARNING: ${msg}\n`);
+
+		if (this.usingDefaultHistoryDir) {
+			warn(
+				`historyDir is not set — using default "${DEFAULT_HISTORY_DIR}". ` +
+				`Set it explicitly in playwright.config.ts so you can change it later without losing history.\n` +
+				`  Example: reporters: [["@acahet/playwright-reporter", { historyDir: "./reports/history" }]]`,
+			);
+		} else {
+			// Custom historyDir: check if the default path has orphaned data
+			const defaultIndex = path.join(DEFAULT_HISTORY_DIR, 'history-index.json');
+			const customHasData = await this.fileExists(this.historyIndexFile);
+			const defaultHasData = await this.fileExists(defaultIndex);
+
+			if (!customHasData && defaultHasData) {
+				warn(
+					`historyDir is set to "${this.historyDir}" but no history was found there. ` +
+					`Existing history was detected at the default path "${DEFAULT_HISTORY_DIR}". ` +
+					`To preserve it, copy that directory to "${this.historyDir}" before running again.`,
+				);
+			}
+		}
+
+		if (!this.projectName) {
+			warn(
+				`projectName is not set — the dashboard topbar and PDF exports will show no project name. ` +
+				`Add it to your reporter options: { projectName: "My Project" }`,
+			);
+		}
+	}
+
+	private async fileExists(filePath: string): Promise<boolean> {
+		try {
+			await fs.access(filePath);
+			return true;
+		} catch {
+			return false;
 		}
 	}
 

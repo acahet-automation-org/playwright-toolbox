@@ -1930,6 +1930,37 @@
   box-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
 
+.lang-toggle {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+
+.lang-btn {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all .15s;
+  letter-spacing: .04em;
+}
+
+.lang-btn:hover { color: var(--text); }
+
+.lang-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+
     /* ── Print / PDF ─────────────────────────────────────────── */
     #printReport { display: none; }
 
@@ -2001,7 +2032,7 @@
     <div class="csv-btn-wrap" id="exportCsvWrap">
       <button class="export-btn" id="exportCsvBtn" onclick="exportCSV('latest')">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        Export CSV
+        <span data-i18n="export_csv">Export CSV</span>
       </button>
       <button class="csv-chevron" id="csvChevron" onclick="toggleCsvDropdown(event)">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2009,23 +2040,27 @@
       <div class="csv-dropdown" id="csvDropdown">
         <div class="csv-dropdown-item" onclick="exportCSV('latest');closeCsvDropdown()">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="6" r="1.5" fill="currentColor"/></svg>
-          Latest run
+          <span data-i18n="csv_latest">Latest run</span>
         </div>
         <div class="csv-dropdown-item" onclick="exportCSV('all');closeCsvDropdown()">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M1 6h10M1 9h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-          All runs
+          <span data-i18n="csv_all">All runs</span>
         </div>
       </div>
     </div>
     <button class="export-btn" id="exportBtn" onclick="exportPDF()">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-      Export PDF
+      <span data-i18n="export_pdf">Export PDF</span>
     </button>
-    <button class="tour-help-btn" onclick="startTour()" title="Start guided tour">?</button>
+    <button class="tour-help-btn" onclick="startTour()" data-i18n-title="tour_help_title" title="Start guided tour">?</button>
+    <div class="lang-toggle" id="lang-toggle">
+  <button data-lang="en" class="lang-btn active">EN</button>
+  <button data-lang="it" class="lang-btn">IT</button>
+</div>
     <div class="theme-toggle" id="theme-toggle">
-  <button data-theme="system" class="theme-btn active">System</button>
-  <button data-theme="dark" class="theme-btn">Dark</button>
-  <button data-theme="light" class="theme-btn">Light</button>
+  <button data-theme="system" data-i18n="theme_system" class="theme-btn active">System</button>
+  <button data-theme="dark" data-i18n="theme_dark" class="theme-btn">Dark</button>
+  <button data-theme="light" data-i18n="theme_light" class="theme-btn">Light</button>
 </div>
   </header>
 
@@ -2038,8 +2073,8 @@
       <div class="tour-card-title" id="tourTitle"></div>
       <div class="tour-card-body"  id="tourBody"></div>
       <div class="tour-card-actions">
-        <button class="tour-skip" onclick="endTour()">Skip tour</button>
-        <button class="tour-btn ghost"   id="tourPrev" onclick="prevTourStep()">← Back</button>
+        <button class="tour-skip" id="tourSkip" onclick="endTour()" data-i18n="tour_skip">Skip tour</button>
+        <button class="tour-btn ghost"   id="tourPrev" onclick="prevTourStep()" data-i18n="tour_back">← Back</button>
         <button class="tour-btn primary" id="tourNext" onclick="nextTourStep()">Next →</button>
       </div>
     </div>
@@ -2050,38 +2085,38 @@
 
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
-    <span class="sidebar-section-label">Navigate</span>
+    <span class="sidebar-section-label" data-i18n="nav_navigate">Navigate</span>
     <div class="sidebar-item active" id="nav-dashboard" onclick="navTo('dashboard',this)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".7"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".7"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".7"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity=".4"/></svg>
-      Dashboard
+      <span data-i18n="nav_dashboard">Dashboard</span>
     </div>
     <div class="sidebar-item" id="nav-trends" onclick="navTo('trends',this)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><polyline points="1,12 4,7 7,9 10,4 14,6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Trends
+      <span data-i18n="nav_trends">Trends</span>
     </div>
     <div class="sidebar-item" id="nav-search" onclick="navTo('search',this)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-      Search tests
+      <span data-i18n="nav_search">Search tests</span>
     </div>
     <div class="sidebar-item" id="nav-gallery" onclick="navTo('gallery',this)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="8" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="8" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
-      Gallery
+      <span data-i18n="nav_gallery">Gallery</span>
     </div>
     <div class="sidebar-item" id="nav-quarantine" onclick="navTo('quarantine',this)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1.5L2 4v4c0 3.3 2.4 5.7 5.5 6.5C10.6 13.7 13 11.3 13 8V4L7.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
-      Quarantine
+      <span data-i18n="nav_quarantine">Quarantine</span>
     </div>
 
     <div class="sidebar-divider"></div>
-    <span class="sidebar-section-label">Filters</span>
+    <span class="sidebar-section-label" data-i18n="nav_filters">Filters</span>
     <div class="sidebar-filter-section" id="sidebarFilters">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--border2);padding:4px 6px">loading…</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--border2);padding:4px 6px" data-i18n="nav_loading">loading…</div>
     </div>
 
     <div class="sidebar-divider"></div>
-    <span class="sidebar-section-label">Recent runs</span>
+    <span class="sidebar-section-label" data-i18n="nav_recent_runs">Recent runs</span>
     <div id="sidebarRuns">
-      <div style="padding:8px 18px;font-family:var(--mono);font-size:11px;color:var(--border2)">loading…</div>
+      <div style="padding:8px 18px;font-family:var(--mono);font-size:11px;color:var(--border2)" data-i18n="nav_loading">loading…</div>
     </div>
   </nav>
 
@@ -2096,7 +2131,7 @@
   <main class="main" id="mainContent">
     <div class="state-screen">
       <div class="spinner"></div>
-      <p>Loading test history…</p>
+      <p data-i18n="loading">Loading test history…</p>
     </div>
   </main>
 
@@ -2140,6 +2175,254 @@ function statusColor(s) {
 
 function statusClass(s) {
   return { passed:'pass', failed:'fail', flaky:'flaky', skipped:'skip' }[s] ?? 'skip';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// i18n — inline translations (no server required, works on file://)
+// ─────────────────────────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  en: {
+    nav_navigate:'Navigate', nav_dashboard:'Dashboard', nav_trends:'Trends',
+    nav_search:'Search tests', nav_gallery:'Gallery', nav_quarantine:'Quarantine',
+    nav_filters:'Filters', nav_recent_runs:'Recent runs',
+    nav_loading:'loading…', sidebar_tags:'Tags', sidebar_specs:'Specs',
+    stat_latest_run:'Latest run', stat_pass_rate_all:'Pass rate · ALL',
+    stat_passed:'Passed', stat_failed:'Failed', stat_flaky:'Flaky',
+    stat_quarantined:'Quarantined', stat_regressing:'Perf regression',
+    stat_skipped:'Skipped', stat_total:'Total', stat_duration:'Duration',
+    stat_health_grade:'Suite health grade',
+    filter_show_all_tests:'Show all tests', filter_passed:'Filter: passed',
+    filter_failed:'Filter: failed', filter_flaky:'Filter: flaky',
+    filter_quarantined:'Filter: quarantined', filter_regressing:'Filter: perf regression',
+    filter_regressing_title:'Filter: performance regression',
+    filter_skipped:'Filter: skipped',
+    filter_banner_showing:'Showing', filter_banner_from_run:'from this run',
+    filter_banner_test:'test', filter_banner_tests:'tests',
+    filter_show_all_btn:'✕ Show all',
+    chart_test_results_trend:'Test results trend', chart_overall:'Overall',
+    chart_per_test:'Per test', chart_run_duration:'Run duration',
+    chart_legend_passed:'Passed', chart_legend_failed:'Failed',
+    chart_legend_skipped:'Skipped', chart_legend_duration:'Duration',
+    chart_not_enough_data_yet:'Not enough data yet',
+    bar_passed:'passed', bar_failed:'failed', bar_flaky:'flaky',
+    bar_skipped:'skipped', bar_pass_rate:'pass',
+    recent_runs:'Recent runs ({n})',
+    badge_passed:'passed', badge_failed:'failed', badge_flaky:'flaky',
+    badge_skipped:'skipped', badge_quarantined:'quarantined', badge_regressing:'perf regression',
+    run_failed_flaky:'Failed &amp; flaky ({n})', run_show_all:'show all {n} tests',
+    run_all_tests:'All tests ({n})',
+    run_no_filter_tests:'No {status} tests in this run.',
+    run_no_test_failed:'No test failed in this run.',
+    test_error:'error', test_slow:'SLOW', test_regressing:'PERF REGRESSION',
+    test_quarantined:'quarantined', artifact_trace:'↓ trace',
+    artifact_screenshot:'📷 screenshot',
+    search_placeholder:'Search tests, projects, tags…',
+    search_hint:'↑ select a test to see its full history',
+    search_no_tests:'No tests found.',
+    detail_passed:'passed', detail_failed:'failed', detail_flaky:'flaky',
+    detail_pass_rate:'pass rate', detail_rolling_avg:'rolling avg',
+    detail_description:'description', detail_playwright_error:'playwright error',
+    same_point_badge:'SAME POINT',
+    same_point_title:'Failure at the same location as the previous failure',
+    new_point_badge:'NEW POINT',
+    new_point_title:'Failure at a different location than the previous failure',
+    status_passed:'passed', status_failed:'failed', status_flaky:'flaky', status_skipped:'skipped',
+    dur_over_time:'Duration over time', dur_stable:'~ stable',
+    dur_vs_prev:'% vs prev', dur_regressing:' · ⚠ perf regression',
+    dur_min:'min', dur_avg:'avg', dur_max:'max',
+    dur_rolling_avg:'— rolling avg', dur_not_enough:'Not enough data yet',
+    failure_reasons:'Failure reasons', failure_total_one:'1 failure total',
+    failure_total_many:'{n} failures total', failure_once:'1 time',
+    failure_times:'{n}×', failure_more:'+{n} more distinct errors',
+    failure_none:'✓ No failures recorded',
+    trends_title:'Trends · last {n} runs', trends_pass_rate:'Pass rate',
+    trends_duration:'Duration', trends_flaky_tests:'Flaky tests',
+    trends_slow_tests:'Slow tests', trends_regressing:'Perf regression',
+    trends_not_enough:'Not enough data', trends_stable:'~ stable',
+    trends_vs_prev:'% vs prev', trends_min:'min', trends_avg:'avg', trends_max:'max',
+    gallery_title:'Screenshots gallery',
+    gallery_title_with_count:'Screenshots gallery · {n} image',
+    gallery_title_with_count_pl:'Screenshots gallery · {n} images',
+    gallery_screenshot:'screenshot', gallery_screenshots:'screenshots',
+    gallery_none:'No screenshots found.',
+    gallery_hint:"Screenshots are captured on failure — run tests with screenshot: 'on' or 'on-first-retry'.",
+    quarantine_title:'Quarantine',
+    quarantine_count_one:'1 test', quarantine_count_many:'{n} tests',
+    quarantine_desc:'Tests tagged @quarantine — excluded from health grade.',
+    quarantine_th_test:'Test', quarantine_th_file:'File',
+    quarantine_th_last10:'Last 10 runs', quarantine_th_fail:'Fail',
+    quarantine_th_flaky:'Flaky', quarantine_th_pass:'Pass', quarantine_th_since:'Since',
+    quarantine_badge:'quarantined',
+    quarantine_sparkline_title:'Last 10 runs (oldest → newest)',
+    quarantine_empty_h:'No quarantined tests',
+    quarantine_empty_p:'Tag tests with @quarantine to track them here.',
+    loading:'Loading test history…', topbar_meta:'{n} runs · last: {date}',
+    export_csv:'Export CSV', export_pdf:'Export PDF',
+    csv_latest:'Latest run', csv_all:'All runs',
+    theme_system:'System', theme_dark:'Dark', theme_light:'Light',
+    tour_help_title:'Start guided tour',
+    tour_skip:'Skip tour', tour_back:'← Back', tour_next:'Next →', tour_done:'Done ✓',
+    tour_step_of:'Step {n} of {total}',
+    tour_0_title:'Welcome to your test dashboard',
+    tour_0_body:'This quick tour walks you through each section so you know exactly where to look. You can replay it any time using the ? button in the top bar.',
+    tour_1_title:'Latest run — at a glance',
+    tour_1_body:'Each card shows a count for that status in the most recent run. Click a card to filter the list below — e.g. click "flaky" to see only flaky tests from this run.',
+    tour_2_title:'Run history',
+    tour_2_body:'Every run appears here, newest first. Expand a run to see failing and flaky tests, read the error message, and view artifacts.',
+    tour_3_title:'Screenshot preview',
+    tour_3_body:'Click the 📷 screenshot button on any failed test to open the failure screenshot in an inline lightbox — no download needed.',
+    tour_4_title:'Navigation',
+    tour_4_body:'Five views live here:\n• Dashboard — run history & stat cards\n• Trends — charts over time\n• Search tests — per-test drill-down\n• Gallery — all failure screenshots\n• Quarantine — sidelined tests',
+    tour_5_title:'Filters',
+    tour_5_body:'Click a test file or tag to jump to the per-test view pre-filtered to that group. Click the same chip again to clear the filter.',
+    tour_6_title:'Trends',
+    tour_6_body:'Charts for pass rate, flakiness, slow-test count, and duration regression across all stored runs. Hover a data point to see the exact value.',
+    tour_7_title:'Per-test history',
+    tour_7_body:'Select any test to see its full run-by-run history, duration chart, and top failure reasons.\n\nNEW POINT and SAME POINT badges appear on each failure row — they tell you whether the test failed at the same code location as last time or moved to a new one.',
+    tour_8_title:'Screenshot gallery',
+    tour_8_body:'All failure screenshots in one scrollable grid. Useful for spotting visual regressions without having to open each run individually.',
+    tour_9_title:'Quarantine',
+    tour_9_body:"Tests tagged @quarantine are excluded from the suite health grade. Monitor them here to know when they're stable enough to un-quarantine and re-enable.",
+    tour_10_title:'Export & share',
+    tour_10_body:'Export PDF generates a printable summary report. Export CSV downloads test results as a spreadsheet — useful for attaching to CI artifacts or sharing with stakeholders.',
+    print_test_report:'test report', print_run_summary:'Run summary',
+    print_kpi_passed:'Passed', print_kpi_failed:'Failed',
+    print_kpi_flaky:'Flaky', print_kpi_skipped:'Skipped', print_kpi_duration:'Duration',
+    print_pass_rate:'pass rate', print_trend_title:'Pass rate trend · last {n} runs',
+    print_recurring_failures:'Recurring failures',
+    print_test_results_by_suite:'Test results by suite',
+    print_generated_by:'generated by',
+    lang_en:'EN', lang_it:'IT',
+  },
+  it: {
+    nav_navigate:'Naviga', nav_dashboard:'Dashboard', nav_trends:'Tendenze',
+    nav_search:'Cerca test', nav_gallery:'Galleria', nav_quarantine:'Quarantena',
+    nav_filters:'Filtri', nav_recent_runs:'Esecuzioni recenti',
+    nav_loading:'caricamento…', sidebar_tags:'Tag', sidebar_specs:'Spec',
+    stat_latest_run:'Ultima esecuzione', stat_pass_rate_all:'Tasso di successo · TUTTI',
+    stat_passed:'OK', stat_failed:'KO', stat_flaky:'Instabili',
+    stat_quarantined:'In quarantena', stat_regressing:'Regr. perf.',
+    stat_skipped:'Saltati', stat_total:'Totale', stat_duration:'Durata',
+    stat_health_grade:'Punteggio salute suite',
+    filter_show_all_tests:'Mostra tutti i test', filter_passed:'Filtra: ok',
+    filter_failed:'Filtra: ko', filter_flaky:'Filtra: instabili',
+    filter_quarantined:'Filtra: in quarantena', filter_regressing:'Filtra: regr. perf.',
+    filter_regressing_title:'Filtra: regressione prestazionale',
+    filter_skipped:'Filtra: saltati',
+    filter_banner_showing:'Mostra', filter_banner_from_run:'da questa esecuzione',
+    filter_banner_test:'test', filter_banner_tests:'test',
+    filter_show_all_btn:'✕ Mostra tutti',
+    chart_test_results_trend:'Tendenza risultati test', chart_overall:'Globale',
+    chart_per_test:'Per test', chart_run_duration:'Durata esecuzione',
+    chart_legend_passed:'OK', chart_legend_failed:'KO',
+    chart_legend_skipped:'Saltati', chart_legend_duration:'Durata',
+    chart_not_enough_data_yet:'Dati insufficienti',
+    bar_passed:'ok', bar_failed:'ko', bar_flaky:'instabili',
+    bar_skipped:'saltati', bar_pass_rate:'successo',
+    recent_runs:'Esecuzioni recenti ({n})',
+    badge_passed:'ok', badge_failed:'ko', badge_flaky:'instabili',
+    badge_skipped:'saltati', badge_quarantined:'quarantena', badge_regressing:'regr. perf.',
+    run_failed_flaky:'KO &amp; instabili ({n})', run_show_all:'mostra tutti i {n} test',
+    run_all_tests:'Tutti i test ({n})',
+    run_no_filter_tests:'Nessun test {status} in questa esecuzione.',
+    run_no_test_failed:'Nessun test fallito in questa esecuzione.',
+    test_error:'errore', test_slow:'LENTO', test_regressing:'REGR. PERF.',
+    test_quarantined:'quarantena', artifact_trace:'↓ traccia',
+    artifact_screenshot:'📷 screenshot',
+    search_placeholder:'Cerca test, progetti, tag…',
+    search_hint:'↑ seleziona un test per vedere la cronologia completa',
+    search_no_tests:'Nessun test trovato.',
+    detail_passed:'ok', detail_failed:'ko', detail_flaky:'instabili',
+    detail_pass_rate:'tasso successo', detail_rolling_avg:'media mobile',
+    detail_description:'descrizione', detail_playwright_error:'errore playwright',
+    same_point_badge:'STESSO PUNTO',
+    same_point_title:'Errore nello stesso punto della precedente esecuzione',
+    new_point_badge:'NUOVO PUNTO',
+    new_point_title:'Errore in un punto diverso dalla precedente esecuzione',
+    status_passed:'ok', status_failed:'ko', status_flaky:'instabile', status_skipped:'saltato',
+    dur_over_time:'Durata nel tempo', dur_stable:'~ stabile',
+    dur_vs_prev:'% rispetto al prec.', dur_regressing:' · ⚠ regr. perf.',
+    dur_min:'min', dur_avg:'media', dur_max:'max',
+    dur_rolling_avg:'— media mobile', dur_not_enough:'Dati insufficienti',
+    failure_reasons:'Cause di fallimento', failure_total_one:'1 fallimento totale',
+    failure_total_many:'{n} fallimenti totali', failure_once:'1 volta',
+    failure_times:'{n}×', failure_more:'+{n} altri errori distinti',
+    failure_none:'✓ Nessun fallimento registrato',
+    trends_title:'Tendenze · ultime {n} esecuzioni', trends_pass_rate:'Tasso di successo',
+    trends_duration:'Durata', trends_flaky_tests:'Test instabili',
+    trends_slow_tests:'Test lenti', trends_regressing:'Regr. perf.',
+    trends_not_enough:'Dati insufficienti', trends_stable:'~ stabile',
+    trends_vs_prev:'% rispetto al prec.', trends_min:'min', trends_avg:'media', trends_max:'max',
+    gallery_title:'Galleria screenshot',
+    gallery_title_with_count:'Galleria screenshot · {n} immagine',
+    gallery_title_with_count_pl:'Galleria screenshot · {n} immagini',
+    gallery_screenshot:'screenshot', gallery_screenshots:'screenshot',
+    gallery_none:'Nessuno screenshot trovato.',
+    gallery_hint:"Gli screenshot vengono acquisiti in caso di errore — esegui i test con screenshot: 'on' o 'on-first-retry'.",
+    quarantine_title:'Quarantena',
+    quarantine_count_one:'1 test', quarantine_count_many:'{n} test',
+    quarantine_desc:'Test contrassegnati con @quarantine — esclusi dal punteggio di salute.',
+    quarantine_th_test:'Test', quarantine_th_file:'File',
+    quarantine_th_last10:'Ultime 10 esecuzioni', quarantine_th_fail:'KO',
+    quarantine_th_flaky:'Instabile', quarantine_th_pass:'OK', quarantine_th_since:'Dal',
+    quarantine_badge:'quarantena',
+    quarantine_sparkline_title:'Ultime 10 esecuzioni (dalla più vecchia alla più recente)',
+    quarantine_empty_h:'Nessun test in quarantena',
+    quarantine_empty_p:'Contrassegna i test con @quarantine per tracciarli qui.',
+    loading:'Caricamento cronologia test…', topbar_meta:'{n} esecuzioni · ultima: {date}',
+    export_csv:'Esporta CSV', export_pdf:'Esporta PDF',
+    csv_latest:'Ultima esecuzione', csv_all:'Tutte le esecuzioni',
+    theme_system:'Sistema', theme_dark:'Scuro', theme_light:'Chiaro',
+    tour_help_title:'Avvia tour guidato',
+    tour_skip:'Salta il tour', tour_back:'← Indietro', tour_next:'Avanti →', tour_done:'Fine ✓',
+    tour_step_of:'Passo {n} di {total}',
+    tour_0_title:'Benvenuto nella tua dashboard',
+    tour_0_body:'Questo tour rapido illustra ogni sezione. Puoi riprodurlo in qualsiasi momento usando il tasto ? nella barra superiore.',
+    tour_1_title:"Ultima esecuzione — a colpo d'occhio",
+    tour_1_body:"Ogni scheda mostra il conteggio per quello stato nell'esecuzione più recente. Fai clic su una scheda per filtrare la lista — es. clicca \"instabili\" per vedere solo i test instabili.",
+    tour_2_title:'Cronologia esecuzioni',
+    tour_2_body:"Ogni esecuzione appare qui, dalla più recente. Espandi un'esecuzione per vedere i test falliti e instabili, leggere i messaggi di errore e visualizzare gli artefatti.",
+    tour_3_title:'Anteprima screenshot',
+    tour_3_body:'Fai clic sul tasto 📷 screenshot su qualsiasi test fallito per aprire lo screenshot del fallimento in un lightbox.',
+    tour_4_title:'Navigazione',
+    tour_4_body:'Cinque viste disponibili:\n• Dashboard — cronologia ed schede statistiche\n• Tendenze — grafici nel tempo\n• Cerca test — analisi per singolo test\n• Galleria — tutti gli screenshot di errore\n• Quarantena — test sospesi',
+    tour_5_title:'Filtri',
+    tour_5_body:'Fai clic su un file di test o un tag per passare alla vista per-test pre-filtrata. Fai clic sullo stesso chip di nuovo per rimuovere il filtro.',
+    tour_6_title:'Tendenze',
+    tour_6_body:'Grafici per tasso di successo, test instabili, test lenti e regressione di durata. Passa il cursore su un punto per vedere il valore esatto.',
+    tour_7_title:'Cronologia per test',
+    tour_7_body:"Seleziona qualsiasi test per vedere la sua cronologia completa, grafico delle durate e principali cause di fallimento.\n\nI badge NUOVO PUNTO e STESSO PUNTO indicano se il test è fallito nello stesso punto del codice o in uno diverso.",
+    tour_8_title:'Galleria screenshot',
+    tour_8_body:'Tutti gli screenshot di errore in una griglia scorrevole. Utile per individuare regressioni visive senza aprire ogni esecuzione singolarmente.',
+    tour_9_title:'Quarantena',
+    tour_9_body:'I test contrassegnati con @quarantine sono esclusi dal punteggio di salute. Monitorali qui per sapere quando sono abbastanza stabili da poter essere riattivati.',
+    tour_10_title:'Esporta e condividi',
+    tour_10_body:'Esporta PDF genera un report di riepilogo stampabile. Esporta CSV scarica i risultati come foglio di calcolo.',
+    print_test_report:'rapporto test', print_run_summary:'Riepilogo esecuzione',
+    print_kpi_passed:'OK', print_kpi_failed:'KO',
+    print_kpi_flaky:'Instabili', print_kpi_skipped:'Saltati', print_kpi_duration:'Durata',
+    print_pass_rate:'tasso successo', print_trend_title:'Tendenza tasso di successo · ultime {n} esecuzioni',
+    print_recurring_failures:'Fallimenti ricorrenti',
+    print_test_results_by_suite:'Risultati test per suite',
+    print_generated_by:'generato da',
+    lang_en:'EN', lang_it:'IT',
+  },
+};
+
+// ── Locale helpers ─────────────────────────────────────────────────────────
+let currentLocale = 'en';
+
+function detectLocale() {
+  const stored = localStorage.getItem('pw-reporter-locale');
+  if (stored === 'en' || stored === 'it') return stored;
+  const lang = (navigator.language || '').toLowerCase().split('-')[0];
+  return lang === 'it' ? 'it' : 'en';
+}
+
+function t(key, vars = {}) {
+  const str = (TRANSLATIONS[currentLocale] ?? TRANSLATIONS.en)[key]
+    ?? TRANSLATIONS.en[key] ?? key;
+  return str.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2383,18 +2666,18 @@ const DEMO_RUNS = (() => {
 })();
 
 // ── Guided tour ────────────────────────────────────────────────────────────
-const TOUR_STEPS = [
+function getTourSteps() { return [
   {
     target: null,
     position: 'center',
-    title: 'Welcome to your test dashboard',
-    body: 'This quick tour walks you through each section so you know exactly where to look. You can replay it any time using the ? button in the top bar.',
+    title: t('tour_0_title'),
+    body: t('tour_0_body'),
   },
   {
     target: '.latest-run-section',
     position: 'bottom',
-    title: 'Latest run — at a glance',
-    body: 'Each card shows a count for that status in the most recent run. Click a card to filter the list below — e.g. click "flaky" to see only flaky tests from this run.',
+    title: t('tour_1_title'),
+    body: t('tour_1_body'),
     beforeStep: () => {
       if (currentPage !== 'dashboard') navTo('dashboard', document.getElementById('nav-dashboard'));
     },
@@ -2402,8 +2685,8 @@ const TOUR_STEPS = [
   {
     target: '#runsList',
     position: 'top',
-    title: 'Run history',
-    body: 'Every run appears here, newest first. Expand a run to see failing and flaky tests, read the error message, and view artifacts.',
+    title: t('tour_2_title'),
+    body: t('tour_2_body'),
     beforeStep: () => {
       if (currentPage !== 'dashboard') navTo('dashboard', document.getElementById('nav-dashboard'));
     },
@@ -2411,8 +2694,8 @@ const TOUR_STEPS = [
   {
     target: () => document.querySelector('.screenshot-link'),
     position: 'top',
-    title: 'Screenshot preview',
-    body: 'Click the 📷 screenshot button on any failed test to open the failure screenshot in an inline lightbox — no download needed.',
+    title: t('tour_3_title'),
+    body: t('tour_3_body'),
     beforeStep: () => {
       if (currentPage !== 'dashboard') navTo('dashboard', document.getElementById('nav-dashboard'));
       // Ensure the latest run is expanded so the artifact buttons are in the DOM
@@ -2423,38 +2706,38 @@ const TOUR_STEPS = [
   {
     target: '#sidebar',
     position: 'right',
-    title: 'Navigation',
-    body: 'Five views live here:\n• Dashboard — run history & stat cards\n• Trends — charts over time\n• Search tests — per-test drill-down\n• Gallery — all failure screenshots\n• Quarantine — sidelined tests',
+    title: t('tour_4_title'),
+    body: t('tour_4_body'),
   },
   {
     target: '#sidebarFilters',
     position: 'right',
-    title: 'Filters',
-    body: 'Click a test file or tag to jump to the per-test view pre-filtered to that group. Click the same chip again to clear the filter.',
+    title: t('tour_5_title'),
+    body: t('tour_5_body'),
   },
   {
     target: '#nav-trends',
     position: 'right',
-    title: 'Trends',
-    body: 'Charts for pass rate, flakiness, slow-test count, and duration regression across all stored runs. Hover a data point to see the exact value.',
+    title: t('tour_6_title'),
+    body: t('tour_6_body'),
   },
   {
     target: '#nav-search',
     position: 'right',
-    title: 'Per-test history',
-    body: 'Select any test to see its full run-by-run history, duration chart, and top failure reasons.\n\nNEW POINT and SAME POINT badges appear on each failure row — they tell you whether the test failed at the same code location as last time or moved to a new one.',
+    title: t('tour_7_title'),
+    body: t('tour_7_body'),
   },
   {
     target: '#nav-gallery',
     position: 'right',
-    title: 'Screenshot gallery',
-    body: 'All failure screenshots in one scrollable grid. Useful for spotting visual regressions without having to open each run individually.',
+    title: t('tour_8_title'),
+    body: t('tour_8_body'),
   },
   {
     target: '#nav-quarantine',
     position: 'right',
-    title: 'Quarantine',
-    body: 'Tests tagged @quarantine are excluded from the suite health grade. Monitor them here to know when they\'re stable enough to un-quarantine and re-enable.',
+    title: t('tour_9_title'),
+    body: t('tour_9_body'),
   },
   {
     target: () => {
@@ -2476,10 +2759,10 @@ const TOUR_STEPS = [
       };
     },
     position: 'bottom',
-    title: 'Export & share',
-    body: 'Export PDF generates a printable summary report. Export CSV downloads test results as a spreadsheet — useful for attaching to CI artifacts or sharing with stakeholders.',
+    title: t('tour_10_title'),
+    body: t('tour_10_body'),
   },
-];
+]; }
 
 let tourStepIdx = 0;
 
@@ -2496,7 +2779,7 @@ window.endTour = function() {
 };
 
 window.nextTourStep = function() {
-  if (tourStepIdx >= TOUR_STEPS.length - 1) { endTour(); return; }
+  if (tourStepIdx >= getTourSteps().length - 1) { endTour(); return; }
   tourStepIdx++;
   goToTourStep(tourStepIdx);
 };
@@ -2508,7 +2791,8 @@ window.prevTourStep = function() {
 };
 
 function goToTourStep(idx) {
-  const step       = TOUR_STEPS[idx];
+  const steps      = getTourSteps();
+  const step       = steps[idx];
   const overlay    = document.getElementById('tourOverlay');
   const spotlight  = document.getElementById('tourSpotlight');
   const card       = document.getElementById('tourCard');
@@ -2516,13 +2800,13 @@ function goToTourStep(idx) {
   if (!overlay.classList.contains('active')) return;
   if (step.beforeStep) step.beforeStep();
 
-  document.getElementById('tourStepLabel').textContent = `Step ${idx + 1} of ${TOUR_STEPS.length}`;
+  document.getElementById('tourStepLabel').textContent = t('tour_step_of', {n: idx + 1, total: steps.length});
   document.getElementById('tourTitle').textContent     = step.title;
   // Support \n line breaks in body
   const bodyEl = document.getElementById('tourBody');
   bodyEl.innerHTML = step.body.split('\n').map(l => l ? `<span>${esc(l)}</span>` : '<br>').join('<br>');
   document.getElementById('tourPrev').style.display   = idx === 0 ? 'none' : '';
-  document.getElementById('tourNext').textContent     = idx === TOUR_STEPS.length - 1 ? 'Done ✓' : 'Next →';
+  document.getElementById('tourNext').textContent     = idx === steps.length - 1 ? t('tour_done') : t('tour_next');
 
   // Resolve target element
   let target = step.target;
@@ -2643,7 +2927,7 @@ function render() {
     : '0.0';
 
   document.getElementById('topbarMeta').textContent =
-    `${totalRuns} runs · last: ${fmtDate(latest.timestamp)}`;
+    t('topbar_meta', {n: totalRuns, date: fmtDate(latest.timestamp)});
 
   buildTestIndex();
   buildRegressionMap();
@@ -2663,53 +2947,53 @@ function renderMainContent(latest, totalRuns, avgPass, latestRate) {
     <div class="latest-run-section">
       <div class="latest-run-header">
         <div style="display:flex;align-items:center;gap:10px">
-          <span class="health-grade grade-${computeGrade(latest)}" title="Suite health grade">${computeGrade(latest)}</span>
-          <span class="latest-run-title">Latest run</span>
+          <span class="health-grade grade-${computeGrade(latest)}" title="${t('stat_health_grade')}">${computeGrade(latest)}</span>
+          <span class="latest-run-title">${t('stat_latest_run')}</span>
         </div>
         <span class="latest-run-ts">${fmtDate(latest.timestamp)} · ${fmtDur(latest.duration)}</span>
       </div>
       <div class="latest-stats-row">
         <div class="latest-stat rate-card clickable ${activeFilter===null?'active-filter':''}"
-             onclick="clearFilter()" title="Show all tests">
-          <span class="latest-stat-label">Pass rate · ALL</span>
+             onclick="clearFilter()" title="${t('filter_show_all_tests')}">
+          <span class="latest-stat-label">${t('stat_pass_rate_all')}</span>
           <span class="latest-stat-value" style="color:${latestRate>=80?'var(--pass)':latestRate>=50?'var(--flaky)':'var(--fail)'}">${latestRate}<span style="font-size:16px">%</span></span>
         </div>
         <div class="latest-stat pass-card ${latest.passed>0?'clickable':''} ${activeFilter==='passed'?'active-filter':''}"
-             ${latest.passed>0?`onclick="filterLatestRun('passed')" title="Filter: passed"`:''}> 
-          <span class="latest-stat-label">Passed</span>
+             ${latest.passed>0?`onclick="filterLatestRun('passed')" title="${t('filter_passed')}"`:''}>  
+          <span class="latest-stat-label">${t('stat_passed')}</span>
           <span class="latest-stat-value" style="color:var(--pass)">${latest.passed}</span>
         </div>
         <div class="latest-stat fail-card ${latest.failed>0?'clickable':''} ${activeFilter==='failed'?'active-filter':''}"
-             ${latest.failed>0?`onclick="filterLatestRun('failed')" title="Filter: failed"`:''}> 
-          <span class="latest-stat-label">Failed</span>
+             ${latest.failed>0?`onclick="filterLatestRun('failed')" title="${t('filter_failed')}"`:''}>  
+          <span class="latest-stat-label">${t('stat_failed')}</span>
           <span class="latest-stat-value" style="color:${latest.failed>0?'var(--fail)':'var(--muted)'}">${latest.failed}</span>
         </div>
         <div class="latest-stat flaky-card ${(latest.flaky??0)>0?'clickable':''} ${activeFilter==='flaky'?'active-filter':''}"
-             ${(latest.flaky??0)>0?`onclick="filterLatestRun('flaky')" title="Filter: flaky"`:''}>
-          <span class="latest-stat-label">Flaky</span>
+             ${(latest.flaky??0)>0?`onclick="filterLatestRun('flaky')" title="${t('filter_flaky')}"`:''}>
+          <span class="latest-stat-label">${t('stat_flaky')}</span>
           <span class="latest-stat-value" style="color:${(latest.flaky??0)>0?'var(--flaky)':'var(--muted)'}">${latest.flaky ?? 0}</span>
         </div>
         <div class="latest-stat quarantine-card ${(latest.quarantined??0)>0?'clickable':''} ${activeFilter==='quarantine'?'active-filter':''}"
-             ${(latest.quarantined??0)>0?`onclick="filterLatestRun('quarantine')" title="Filter: quarantined"`:''}>
-          <span class="latest-stat-label">Quarantined</span>
+             ${(latest.quarantined??0)>0?`onclick="filterLatestRun('quarantine')" title="${t('filter_quarantined')}"`:''}>
+          <span class="latest-stat-label">${t('stat_quarantined')}</span>
           <span class="latest-stat-value" style="color:${(latest.quarantined??0)>0?'var(--quarantine)':'var(--muted)'}">${latest.quarantined ?? 0}</span>
         </div>
         <div class="latest-stat regression-card ${regressingCount>0?'clickable':''} ${activeFilter==='regressing'?'active-filter':''}"
-             ${regressingCount>0?`onclick="filterLatestRun('regressing')" title="Filter: regressing"`:''}>
-          <span class="latest-stat-label">Regressing</span>
+             ${regressingCount>0?`onclick="filterLatestRun('regressing')" title="${t('filter_regressing_title')}"`:''}>
+          <span class="latest-stat-label">${t('stat_regressing')}</span>
           <span class="latest-stat-value" style="color:${regressingCount>0?'var(--regression)':'var(--muted)'}">${regressingCount}</span>
         </div>
         <div class="latest-stat skip-card ${latest.skipped>0?'clickable':''} ${activeFilter==='skipped'?'active-filter':''}"
-             ${latest.skipped>0?`onclick="filterLatestRun('skipped')" title="Filter: skipped"`:''}>
-          <span class="latest-stat-label">Skipped</span>
+             ${latest.skipped>0?`onclick="filterLatestRun('skipped')" title="${t('filter_skipped')}"`:''}>
+          <span class="latest-stat-label">${t('stat_skipped')}</span>
           <span class="latest-stat-value" style="color:var(--muted)">${latest.skipped}</span>
         </div>
         <div class="latest-stat total-card">
-          <span class="latest-stat-label">Total</span>
+          <span class="latest-stat-label">${t('stat_total')}</span>
           <span class="latest-stat-value">${latest.totalTests}</span>
         </div>
         <div class="latest-stat dur-card">
-          <span class="latest-stat-label">Duration</span>
+          <span class="latest-stat-label">${t('stat_duration')}</span>
           <span class="latest-stat-value" style="color:var(--accent);font-size:20px">${fmtDur(latest.duration)}</span>
         </div>
       </div>
@@ -2719,10 +3003,10 @@ function renderMainContent(latest, totalRuns, avgPass, latestRate) {
     <div class="charts-grid">
       <div class="section">
         <div class="section-header">
-          <span class="section-title">Test results trend</span>
+          <span class="section-title">${t('chart_test_results_trend')}</span>
           <div class="tab-group">
-            <button class="tab-btn active" onclick="switchTab('overall',this)">Overall</button>
-            <button class="tab-btn" onclick="switchTab('test',this)">Per test</button>
+            <button class="tab-btn active" onclick="switchTab('overall',this)">${t('chart_overall')}</button>
+            <button class="tab-btn" onclick="switchTab('test',this)">${t('chart_per_test')}</button>
           </div>
         </div>
 
@@ -2731,19 +3015,19 @@ function renderMainContent(latest, totalRuns, avgPass, latestRate) {
           <div class="chart-panel">
             <div class="bar-chart" id="barChart"></div>
             <div class="chart-legend">
-              <div class="legend-item"><span class="legend-dot" style="background:var(--pass)"></span>Passed</div>
-              <div class="legend-item"><span class="legend-dot" style="background:var(--fail)"></span>Failed</div>
-              <div class="legend-item"><span class="legend-dot" style="background:var(--skip);opacity:.5"></span>Skipped</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--pass)"></span>${t('chart_legend_passed')}</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--fail)"></span>${t('chart_legend_failed')}</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--skip);opacity:.5"></span>${t('chart_legend_skipped')}</div>
             </div>
           </div>
         </div>
 
         <!-- Per-test search + grid (no detail here) -->
         <div id="testView" class="test-view">
-          <input class="search-box" id="testSearch" placeholder="Search tests, projects, tags…" oninput="filterTests()">
+          <input class="search-box" id="testSearch" placeholder="${t('search_placeholder')}" oninput="filterTests()">
           <div class="test-grid" id="testGrid"></div>
           <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--muted)" id="testSelectHint">
-            ↑ select a test to see its full history
+            ${t('search_hint')}
           </div>
         </div>
       </div>
@@ -2751,12 +3035,12 @@ function renderMainContent(latest, totalRuns, avgPass, latestRate) {
       <!-- Duration panel -->
       <div class="section">
         <div class="section-header">
-          <span class="section-title">Run duration</span>
+          <span class="section-title">${t('chart_run_duration')}</span>
         </div>
         <div class="chart-panel dur-panel">
           <div class="dur-chart" id="durChart"></div>
           <div class="chart-legend" style="margin-top:8px;padding-top:8px">
-            <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>Duration</div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>${t('chart_legend_duration')}</div>
           </div>
         </div>
       </div>
@@ -2768,7 +3052,7 @@ function renderMainContent(latest, totalRuns, avgPass, latestRate) {
     <!-- Runs list -->
     <div class="section">
       <div class="section-header">
-        <span class="section-title">Recent runs (${totalRuns})</span>
+        <span class="section-title">${t('recent_runs', {n: totalRuns})}</span>
       </div>
       <div id="runsList"></div>
     </div>
@@ -2853,7 +3137,7 @@ function renderSidebarFilters() {
 
   el.innerHTML = `
     ${tags.length ? `
-      <div class="sidebar-filter-group-title">Tags</div>
+      <div class="sidebar-filter-group-title">${t('sidebar_tags')}</div>
       <div class="sidebar-chips">
         ${tags.map(([tag, cnt]) => `
           <div class="sidebar-chip ${sidebarTagFilter===tag?'active':''}"
@@ -2863,7 +3147,7 @@ function renderSidebarFilters() {
           </div>`).join('')}
       </div>` : ''}
     ${specs.length ? `
-      <div class="sidebar-filter-group-title">Specs</div>
+      <div class="sidebar-filter-group-title">${t('sidebar_specs')}</div>
       <div class="sidebar-chips">
         ${specs.map(([spec, cnt]) => `
           <div class="sidebar-chip ${sidebarSpecFilter===spec?'active':''}"
@@ -2952,14 +3236,14 @@ function renderTrendsPage() {
 
   el.innerHTML = `
     <div class="section-header" style="margin-bottom:20px">
-      <span class="section-title">Trends · last ${display.length} runs</span>
+      <span class="section-title">${t('trends_title', {n: display.length})}</span>
     </div>
     <div class="trends-grid">
-      ${buildTrendMiniPanel('Pass rate', passRates, display, v => v.toFixed(1)+'%', 'var(--pass)', true)}
-      ${buildTrendMiniPanel('Duration', durations, display, v => fmtDur(v), 'var(--accent)', false)}
-      ${buildTrendMiniPanel('Flaky tests', flakyCnts, display, v => v+'', 'var(--flaky)', false)}
-      ${buildTrendMiniPanel('Slow tests', slowCnts, display, v => v+'', '#a78bfa', false)}
-      ${buildTrendMiniPanel('Regressing', regressingCnts, display, v => v+'', 'var(--regression)', false)}
+      ${buildTrendMiniPanel(t('trends_pass_rate'), passRates, display, v => v.toFixed(1)+'%', 'var(--pass)', true)}
+      ${buildTrendMiniPanel(t('trends_duration'), durations, display, v => fmtDur(v), 'var(--accent)', false)}
+      ${buildTrendMiniPanel(t('trends_flaky_tests'), flakyCnts, display, v => v+'', 'var(--flaky)', false)}
+      ${buildTrendMiniPanel(t('trends_slow_tests'), slowCnts, display, v => v+'', '#a78bfa', false)}
+      ${buildTrendMiniPanel(t('trends_regressing'), regressingCnts, display, v => v+'', 'var(--regression)', false)}
     </div>`;
 }
 
@@ -2968,15 +3252,15 @@ function buildTrendMiniPanel(label, values, display, fmt, color, higherIsBetter)
   const prev    = values[values.length - 2] ?? current;
   const delta   = prev !== 0 ? ((current - prev) / Math.abs(prev) * 100) : 0;
   const deltaGood = higherIsBetter ? delta >= 0 : delta <= 0;
-  const deltaStr  = delta === 0 ? '~ stable'
-    : `${delta > 0 ? '+' : ''}${delta.toFixed(0)}% vs prev`;
+  const deltaStr  = delta === 0 ? t('trends_stable')
+    : `${delta > 0 ? '+' : ''}${delta.toFixed(0)}${t('trends_vs_prev')}`;
   const deltaColor = delta === 0 ? 'var(--muted)' : deltaGood ? 'var(--pass)' : 'var(--fail)';
 
   if (values.length < 2) {
     return `<div class="trend-mini-panel">
       <div class="trend-mini-title">${label}</div>
       <div class="trend-mini-current" style="color:${color}">${fmt(current)}</div>
-      <div style="color:var(--muted);font-family:var(--mono);font-size:11px">Not enough data</div>
+      <div style="color:var(--muted);font-family:var(--mono);font-size:11px">${t('trends_not_enough')}</div>
     </div>`;
   }
 
@@ -3021,9 +3305,9 @@ function buildTrendMiniPanel(label, values, display, fmt, color, higherIsBetter)
         </svg>
       </div>
       <div class="trend-mini-footer">
-        <span>min ${fmt(Math.min(...values))}</span>
-        <span>avg ${fmt(values.reduce((a,b)=>a+b,0)/values.length)}</span>
-        <span>max ${fmt(Math.max(...values))}</span>
+        <span>${t('trends_min')} ${fmt(Math.min(...values))}</span>
+        <span>${t('trends_avg')} ${fmt(values.reduce((a,b)=>a+b,0)/values.length)}</span>
+        <span>${t('trends_max')} ${fmt(Math.max(...values))}</span>
       </div>
     </div>`;
 }
@@ -3048,10 +3332,10 @@ function renderGalleryPage() {
   if (!groups.length) {
     el.innerHTML = `
       <div class="section-header" style="margin-bottom:20px">
-        <span class="section-title">Screenshots gallery</span>
+        <span class="section-title">${t('gallery_title')}</span>
       </div>
       <div class="gallery-empty">
-        No screenshots found.<br>Screenshots are captured on failure — run tests with <code>screenshot: 'on'</code> or <code>'on-first-retry'</code>.
+        ${t('gallery_none')}<br>${t('gallery_hint')}
       </div>`;
     return;
   }
@@ -3060,14 +3344,14 @@ function renderGalleryPage() {
 
   el.innerHTML = `
     <div class="section-header" style="margin-bottom:20px">
-      <span class="section-title">Screenshots gallery · ${totalShots} image${totalShots !== 1 ? 's' : ''}</span>
+      <span class="section-title">${totalShots === 1 ? t('gallery_title_with_count', {n: totalShots}) : t('gallery_title_with_count_pl', {n: totalShots})}</span>
     </div>
     ${groups.map(({ run, shots }) => `
       <div class="gallery-run-group">
         <div class="gallery-run-header">
           <span class="gallery-run-dot" style="background:${run.failed===0?'var(--pass)':'var(--fail)'}"></span>
           <span class="gallery-run-ts">${fmtDate(run.timestamp)}</span>
-          <span class="gallery-run-count">${shots.length} screenshot${shots.length!==1?'s':''}</span>
+          <span class="gallery-run-count">${shots.length !== 1 ? t('gallery_screenshots') : t('gallery_screenshot')} (${shots.length})</span>
         </div>
         <div class="gallery-grid">
           ${shots.map(({ src, t }) => `
@@ -3121,11 +3405,11 @@ function renderQuarantinePage() {
 
   if (testMap.size === 0) {
     container.innerHTML = `
-      <div class="page-header"><h2 class="page-title">Quarantine</h2></div>
+      <div class="page-header"><h2 class="page-title">${t('quarantine_title')}</h2></div>
       <div class="state-screen" style="padding:80px 0">
         <div class="state-screen-icon" style="font-size:36px">🛡️</div>
-        <h3>No quarantined tests</h3>
-        <p style="color:var(--muted)">Tag tests with <code style="font-family:var(--mono);background:var(--surface2);padding:2px 6px;border-radius:4px">@quarantine</code> to track them here.</p>
+        <h3>${t('quarantine_empty_h')}</h3>
+        <p style="color:var(--muted)">${t('quarantine_empty_p')}</p>
       </div>`;
     return;
   }
@@ -3135,22 +3419,22 @@ function renderQuarantinePage() {
   container.innerHTML = `
     <div class="page-header">
       <div style="display:flex;align-items:baseline;gap:10px">
-        <h2 class="page-title">Quarantine</h2>
-        <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">${quarantinedTests.length} test${quarantinedTests.length !== 1 ? 's' : ''}</span>
+        <h2 class="page-title">${t('quarantine_title')}</h2>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">${quarantinedTests.length === 1 ? t('quarantine_count_one') : t('quarantine_count_many', {n: quarantinedTests.length})}</span>
       </div>
-      <p style="color:var(--muted);font-size:13px;margin-top:4px">Tests tagged <code style="font-family:var(--mono);background:var(--surface2);padding:1px 5px;border-radius:4px">@quarantine</code> — excluded from health grade.</p>
+      <p style="color:var(--muted);font-size:13px;margin-top:4px">${t('quarantine_desc')}</p>
     </div>
     <div class="section">
       <table style="width:100%;border-collapse:collapse">
         <thead>
           <tr style="border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--muted);text-align:left">
-            <th style="padding:8px 12px">Test</th>
-            <th style="padding:8px 12px">File</th>
-            <th style="padding:8px 12px">Last 10 runs</th>
-            <th style="padding:8px 12px">Fail</th>
-            <th style="padding:8px 12px">Flaky</th>
-            <th style="padding:8px 12px">Pass</th>
-            <th style="padding:8px 12px">Since</th>
+            <th style="padding:8px 12px">${t('quarantine_th_test')}</th>
+            <th style="padding:8px 12px">${t('quarantine_th_file')}</th>
+            <th style="padding:8px 12px">${t('quarantine_th_last10')}</th>
+            <th style="padding:8px 12px">${t('quarantine_th_fail')}</th>
+            <th style="padding:8px 12px">${t('quarantine_th_flaky')}</th>
+            <th style="padding:8px 12px">${t('quarantine_th_pass')}</th>
+            <th style="padding:8px 12px">${t('quarantine_th_since')}</th>
           </tr>
         </thead>
         <tbody>
@@ -3168,13 +3452,13 @@ function renderQuarantinePage() {
                   <div style="font-size:13px;font-weight:500">${esc(t.title)}</div>
                   <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
                     <span class="badge" style="background:var(--surface2);color:var(--muted);font-size:10px">${esc(t.project)}</span>
-                    <span class="badge quarantine" style="font-size:10px">quarantined</span>
+                    <span class="badge quarantine" style="font-size:10px">${t('quarantine_badge')}</span>
                     ${tagsHtml}
                   </div>
                 </td>
                 <td style="padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.file)}</td>
                 <td style="padding:10px 12px">
-                  <div class="sparkline" title="Last 10 runs (oldest → newest)" style="gap:3px">${sparkHtml}</div>
+                  <div class="sparkline" title="${t('quarantine_sparkline_title')}" style="gap:3px">${sparkHtml}</div>
                 </td>
                 <td style="padding:10px 12px;font-family:var(--mono);font-size:13px;color:${failCount > 0 ? 'var(--fail)' : 'var(--muted)'}">${failCount}</td>
                 <td style="padding:10px 12px;font-family:var(--mono);font-size:13px;color:${flakyCount > 0 ? 'var(--flaky)' : 'var(--muted)'}">${flakyCount}</td>
@@ -3267,29 +3551,29 @@ function buildPrintReport() {
     <div class="pr-page">
       <div class="pr-header">
         <div>
-          <div class="pr-brand">${esc(CONFIG.brandName)} · test report</div>
+          <div class="pr-brand">${esc(CONFIG.brandName)} · ${t('print_test_report')}</div>
           <div class="pr-project">${esc(projectName)}</div>
           <div class="pr-run-meta">Run ${esc(latest.runId ?? '')} · ${fmtDate(latest.timestamp)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:12px">
           <div style="text-align:right">
             <div style="font-size:20px;font-weight:700;color:#fff;font-family:monospace">${latestRate}%</div>
-            <div style="font-size:10px;color:#7b82a0;font-family:monospace">pass rate</div>
+            <div style="font-size:10px;color:#7b82a0;font-family:monospace">${t('print_pass_rate')}</div>
           </div>
           <div class="pr-grade pr-grade-${grade}">${grade}</div>
         </div>
       </div>
 
-      <div class="pr-section-title">Run summary</div>
+      <div class="pr-section-title">${t('print_run_summary')}</div>
       <div class="pr-kpi-row">
-        <div class="pr-kpi"><div class="pr-kpi-label">Passed</div><div class="pr-kpi-value" style="color:#0f6e56">${latest.passed}</div></div>
-        <div class="pr-kpi"><div class="pr-kpi-label">Failed</div><div class="pr-kpi-value" style="color:#a32d2d">${latest.failed}</div></div>
-        <div class="pr-kpi"><div class="pr-kpi-label">Flaky</div><div class="pr-kpi-value" style="color:#854f0b">${latest.flaky ?? 0}</div></div>
-        <div class="pr-kpi"><div class="pr-kpi-label">Skipped</div><div class="pr-kpi-value" style="color:#888">${latest.skipped}</div></div>
-        <div class="pr-kpi"><div class="pr-kpi-label">Duration</div><div class="pr-kpi-value" style="color:#185fa5;font-size:16px">${fmtDur(latest.duration)}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">${t('print_kpi_passed')}</div><div class="pr-kpi-value" style="color:#0f6e56">${latest.passed}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">${t('print_kpi_failed')}</div><div class="pr-kpi-value" style="color:#a32d2d">${latest.failed}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">${t('print_kpi_flaky')}</div><div class="pr-kpi-value" style="color:#854f0b">${latest.flaky ?? 0}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">${t('print_kpi_skipped')}</div><div class="pr-kpi-value" style="color:#888">${latest.skipped}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">${t('print_kpi_duration')}</div><div class="pr-kpi-value" style="color:#185fa5;font-size:16px">${fmtDur(latest.duration)}</div></div>
       </div>
 
-      <div class="pr-section-title">Pass rate trend · last ${trendRuns.length} runs</div>
+      <div class="pr-section-title">${t('print_trend_title', {n: trendRuns.length})}</div>
       ${trendRuns.map(r => {
         const rate = r.totalTests > 0 ? (r.passed / r.totalTests * 100) : 0;
         const col  = rate >= 80 ? '#2dd4a0' : rate >= 50 ? '#f5a623' : '#f25f5c';
@@ -3301,7 +3585,7 @@ function buildPrintReport() {
       }).join('')}
 
       ${failures.length ? `
-        <div class="pr-section-title">Recurring failures</div>
+        <div class="pr-section-title">${t('print_recurring_failures')}</div>
         ${failures.map(({ label, cnt }) => `
           <div class="pr-failure-row">
             <div class="pr-failure-count">${cnt}×</div>
@@ -3309,7 +3593,7 @@ function buildPrintReport() {
             <div class="pr-failure-msg">${esc(label)}</div>
           </div>`).join('')}` : ''}
 
-      <div class="pr-section-title">Test results by suite</div>
+      <div class="pr-section-title">${t('print_test_results_by_suite')}</div>
       ${[...suites.entries()].map(([suite, tests]) => `
         <div class="pr-suite-title">${esc(suite)}</div>
         ${tests.map(t => `
@@ -3320,7 +3604,7 @@ function buildPrintReport() {
           </div>`).join('')}`).join('')}
 
       <div class="pr-footer">
-        <span>generated by ${esc(CONFIG.brandName)} · acahet</span>
+        <span>${t('print_generated_by')} ${esc(CONFIG.brandName)} · acahet</span>
         <span>${esc(latest.runId ?? '')}</span>
       </div>
     </div>`;
@@ -3411,11 +3695,11 @@ function renderBarChart() {
     return `
       <div class="bar-col">
         <div class="bar-tooltip">
-          <div style="color:var(--pass)">${r.passed} passed</div>
-          ${r.failed  > 0 ? `<div style="color:var(--fail)">${r.failed} failed</div>` : ''}
-          ${r.flaky   > 0 ? `<div style="color:var(--flaky)">${r.flaky} flaky</div>` : ''}
-          ${r.skipped > 0 ? `<div style="color:var(--skip)">${r.skipped} skipped</div>` : ''}
-          <div style="color:var(--muted);margin-top:2px">${rate}% pass · ${fmtDur(r.duration)}</div>
+          <div style="color:var(--pass)">${r.passed} ${t('bar_passed')}</div>
+          ${r.failed  > 0 ? `<div style="color:var(--fail)">${r.failed} ${t('bar_failed')}</div>` : ''}
+          ${r.flaky   > 0 ? `<div style="color:var(--flaky)">${r.flaky} ${t('bar_flaky')}</div>` : ''}
+          ${r.skipped > 0 ? `<div style="color:var(--skip)">${r.skipped} ${t('bar_skipped')}</div>` : ''}
+          <div style="color:var(--muted);margin-top:2px">${rate}% ${t('bar_pass_rate')} · ${fmtDur(r.duration)}</div>
         </div>
         <div class="bar-stack" style="height:${stackH}px">
           ${r.skipped > 0 ? `<div class="bar-seg-skip"  style="height:${skipH}px"></div>` : ''}
@@ -3431,7 +3715,7 @@ function renderBarChart() {
 function renderDurChart() {
   const el = document.getElementById('durChart');
   const display = runs.slice(0, 30).reverse();
-  if (display.length < 2) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Not enough data yet</div>'; return; }
+  if (display.length < 2) { el.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:8px">${t('chart_not_enough_data_yet')}</div>`; return; }
 
   const W = 300, H = 70;
   const durations = display.map(r => r.duration);
@@ -3512,10 +3796,11 @@ function renderTestGrid(tests) {
   if (!grid) return;
 
   if (!tests.length) {
-    grid.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px">No tests found.</div>';
+    grid.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px">' + t('search_no_tests') + '</div>';
     return;
   }
 
+  const tl = t; // alias to avoid shadowing by map param `t` (test object)
   grid.innerHTML = tests.map(t => {
     const spark = getSparkline(t.key);
     const tagsHtml = t.tags.length
@@ -3527,8 +3812,8 @@ function renderTestGrid(tests) {
         <div class="test-card-name">${esc(t.title)}</div>
         <div class="test-card-meta">
           <span class="test-card-project">${esc(t.project)}</span>
-          ${t.quarantined ? `<span class="badge quarantine" style="font-size:10px;padding:1px 5px">quarantined</span>` : ''}
-          <div class="sparkline" title="Last 10 runs (oldest → newest)">
+          ${t.quarantined ? `<span class="badge quarantine" style="font-size:10px;padding:1px 5px">${tl('test_quarantined')}</span>` : ''}
+          <div class="sparkline" title="${tl('quarantine_sparkline_title')}">
             ${spark.map(s => `<span class="spark-dot ${s}"></span>`).join('')}
           </div>
         </div>
@@ -3626,8 +3911,8 @@ function renderTestDetail(project, title) {
         <div>
           <div class="test-detail-name" style="display:flex;align-items:center;gap:8px">
             <span>${esc(title)}</span>
-            ${isQuarantined ? `<span class="badge quarantine">quarantined</span>` : ''}
-            ${isRegressing  ? `<span class="regressing-badge">REGRESSING</span>`  : ''}
+            ${isQuarantined ? `<span class="badge quarantine">${t('test_quarantined')}</span>` : ''}
+            ${isRegressing  ? `<span class="regressing-badge">${t('test_regressing')}</span>`  : ''}
           </div>
           ${metaAnnots.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
             ${metaAnnots.map(a => `<span class="tag" style="background:rgba(124,159,255,.12);color:var(--accent2);border-color:rgba(124,159,255,.2)">${esc(a.type)}${a.description ? ': ' + esc(a.description) : ''}</span>`).join('')}
@@ -3636,23 +3921,23 @@ function renderTestDetail(project, title) {
         <div class="test-detail-stats">
           <div class="test-detail-stat">
             <div class="test-detail-stat-value" style="color:var(--pass)">${passed}</div>
-            <div class="test-detail-stat-label">passed</div>
+            <div class="test-detail-stat-label">${t('detail_passed')}</div>
           </div>
           ${failed > 0 ? `<div class="test-detail-stat">
             <div class="test-detail-stat-value" style="color:var(--fail)">${failed}</div>
-            <div class="test-detail-stat-label">failed</div>
+            <div class="test-detail-stat-label">${t('detail_failed')}</div>
           </div>` : ''}
           ${flaky > 0 ? `<div class="test-detail-stat">
             <div class="test-detail-stat-value" style="color:var(--flaky)">${flaky}</div>
-            <div class="test-detail-stat-label">flaky</div>
+            <div class="test-detail-stat-label">${t('detail_flaky')}</div>
           </div>` : ''}
           <div class="test-detail-stat">
             <div class="test-detail-stat-value" style="color:${rate>=80?'var(--pass)':rate>=50?'var(--flaky)':'var(--fail)'}">${rate}<span style="font-size:14px">%</span></div>
-            <div class="test-detail-stat-label">pass rate</div>
+            <div class="test-detail-stat-label">${t('detail_pass_rate')}</div>
           </div>
           ${regrData ? `<div class="test-detail-stat">
             <div class="test-detail-stat-value" style="color:${isRegressing?'var(--regression)':'var(--muted)'};font-size:16px">${fmtDur(Math.round(regrData.rollingAvg))}</div>
-            <div class="test-detail-stat-label">rolling avg</div>
+            <div class="test-detail-stat-label">${t('detail_rolling_avg')}</div>
           </div>` : ''}
         </div>
       </div>
@@ -3660,7 +3945,7 @@ function renderTestDetail(project, title) {
       <!-- Annotation description block (if any) -->
       ${annotDesc ? `
         <div class="test-annot-block">
-          <div class="test-annot-type">description</div>
+          <div class="test-annot-type">${t('detail_description')}</div>
           <div class="test-annot-text">${esc(annotDesc)}</div>
         </div>` : ''}
 
@@ -3684,9 +3969,9 @@ function renderTrendRow(h, i, samePoint = null) {
   const rowId       = `tr-${i}-${Date.now()}`;
 
   const samePointBadge = samePoint === true
-    ? `<span class="same-point-badge" title="Failure at the same location as the previous failure">SAME POINT</span>`
+    ? `<span class="same-point-badge" title="${t('same_point_title')}">${t('same_point_badge')}</span>`
     : samePoint === false
-      ? `<span class="diff-point-badge" title="Failure at a different location than the previous failure">NEW POINT</span>`
+      ? `<span class="diff-point-badge" title="${t('new_point_title')}">${t('new_point_badge')}</span>`
       : '';
 
   return `
@@ -3712,7 +3997,7 @@ function renderTrendRow(h, i, samePoint = null) {
           ${hasError ? `
             <div class="error-toggle" onclick="toggleError('err-${rowId}', 'etoggle-${rowId}')">
               <span class="error-toggle-icon" id="etoggle-${rowId}">▶</span>
-              playwright error
+              ${t('detail_playwright_error')}
             </div>
             <div class="trend-row-error" id="err-${rowId}">${esc(h.error)}</div>` : ''}
         </div>` : ''}
@@ -3739,8 +4024,8 @@ window.toggleError = function(errId, toggleId) {
 function buildDurationPanel(historyAsc) {
   if (historyAsc.length < 2) {
     return `<div class="detail-sub-panel">
-      <div class="detail-sub-title">Duration over time</div>
-      <div class="no-failures-msg">Not enough data yet</div>
+      <div class="detail-sub-title">${t('dur_over_time')}</div>
+      <div class="no-failures-msg">${t('dur_not_enough')}</div>
     </div>`;
   }
 
@@ -3802,13 +4087,13 @@ function buildDurationPanel(historyAsc) {
   const deltaSign = deltaPct > 5 ? 'up' : deltaPct < -5 ? 'down' : 'flat';
   const lastAvgPt = avgPts.filter(Boolean).at(-1);
   const regressingLatest = lastAvgPt?.exceeded ?? false;
-  const deltaLabel = (deltaSign === 'flat' ? '~ stable' : `${deltaPct > 0 ? '+' : ''}${deltaPct.toFixed(0)}% vs prev`)
-    + (regressingLatest ? ' · ⚠ regressing' : '');
+  const deltaLabel = (deltaSign === 'flat' ? t('dur_stable') : `${deltaPct > 0 ? '+' : ''}${deltaPct.toFixed(0)}${t('dur_vs_prev')}`)
+    + (regressingLatest ? t('dur_regressing') : '');
 
   return `
     <div class="detail-sub-panel">
       <div class="detail-sub-title">
-        Duration over time
+        ${t('dur_over_time')}
         <span class="dur-delta ${deltaSign}">${deltaLabel}</span>
       </div>
       <div class="dur-mini">
@@ -3827,10 +4112,10 @@ function buildDurationPanel(historyAsc) {
         </svg>
       </div>
       <div class="dur-mini-meta">
-        <span>min ${fmtDur(minD)}</span>
-        <span>avg ${fmtDur(Math.round(durations.reduce((a,b)=>a+b,0)/durations.length))}</span>
-        <span>max ${fmtDur(maxD)}</span>
-        ${avgPolylineStr ? `<span style="color:var(--regression)">— rolling avg</span>` : ''}
+        <span>${t('dur_min')} ${fmtDur(minD)}</span>
+        <span>${t('dur_avg')} ${fmtDur(Math.round(durations.reduce((a,b)=>a+b,0)/durations.length))}</span>
+        <span>${t('dur_max')} ${fmtDur(maxD)}</span>
+        ${avgPolylineStr ? `<span style="color:var(--regression)">${t('dur_rolling_avg')}</span>` : ''}
       </div>
     </div>`;
 }
@@ -3841,8 +4126,8 @@ function buildFailureReasonsPanel(historyAsc) {
 
   if (!failures.length) {
     return `<div class="detail-sub-panel">
-      <div class="detail-sub-title">Failure reasons</div>
-      <div class="no-failures-msg" style="color:var(--pass)">✓ No failures recorded</div>
+      <div class="detail-sub-title">${t('failure_reasons')}</div>
+      <div class="no-failures-msg" style="color:var(--pass)">${t('failure_none')}</div>
     </div>`;
   }
 
@@ -3865,7 +4150,7 @@ function buildFailureReasonsPanel(historyAsc) {
 
   const rows = sorted.slice(0, 6).map(([label, { count, isFlaky }]) => {
     const pct = (count / maxCount * 100).toFixed(0);
-    const times = count === 1 ? '1 time' : `${count}×`;
+    const times = count === 1 ? t('failure_once') : t('failure_times', {n: count});
     return `
       <div class="reason-row">
         <div class="reason-row-header">
@@ -3879,14 +4164,14 @@ function buildFailureReasonsPanel(historyAsc) {
   }).join('');
 
   const more = sorted.length > 6
-    ? `<div class="reason-count" style="margin-top:4px">+${sorted.length - 6} more distinct errors</div>`
+    ? `<div class="reason-count" style="margin-top:4px">${t('failure_more', {n: sorted.length - 6})}</div>`
     : '';
 
   return `
     <div class="detail-sub-panel">
       <div class="detail-sub-title">
-        Failure reasons
-        <span>${failures.length} failure${failures.length > 1 ? 's' : ''} total</span>
+        ${t('failure_reasons')}
+        <span>${failures.length === 1 ? t('failure_total_one') : t('failure_total_many', {n: failures.length})}</span>
       </div>
       <div class="reason-list">${rows}</div>
       ${more}
@@ -3942,12 +4227,12 @@ function renderRunsList() {
             <span class="run-status-dot" style="background:${isPass ? 'var(--pass)' : 'var(--fail)'}"></span>
             <span class="run-card-ts">${fmtDate(run.timestamp)}</span>
             <div class="run-badges">
-              <span class="badge pass">${run.passed} passed</span>
-              ${run.failed      > 0 ? `<span class="badge fail">${run.failed} failed</span>`             : ''}
-              ${run.flaky       > 0 ? `<span class="badge flaky">${run.flaky} flaky</span>`             : ''}
-              ${run.skipped     > 0 ? `<span class="badge skip">${run.skipped} skipped</span>`           : ''}
-              ${(run.quarantined??0) > 0 ? `<span class="badge quarantine">${run.quarantined} quarantined</span>` : ''}
-              ${regressingInRun > 0 ? `<span class="badge regression">${regressingInRun} regressing</span>` : ''}
+              <span class="badge pass">${run.passed} ${t('badge_passed')}</span>
+              ${run.failed      > 0 ? `<span class="badge fail">${run.failed} ${t('badge_failed')}</span>`             : ''}
+              ${run.flaky       > 0 ? `<span class="badge flaky">${run.flaky} ${t('badge_flaky')}</span>`             : ''}
+              ${run.skipped     > 0 ? `<span class="badge skip">${run.skipped} ${t('badge_skipped')}</span>`           : ''}
+              ${(run.quarantined??0) > 0 ? `<span class="badge quarantine">${run.quarantined} ${t('badge_quarantined')}</span>` : ''}
+              ${regressingInRun > 0 ? `<span class="badge regression">${regressingInRun} ${t('badge_regressing')}</span>` : ''}
             </div>
           </div>
           <div class="run-card-right">
@@ -3959,20 +4244,20 @@ function renderRunsList() {
           <div class="run-detail ${isLatest && activeFilter ? 'open' : ''}" id="detail-${idx}">
             ${isFiltered ? `
               <div class="filter-banner">
-                <span class="filter-banner-label">Showing <strong>${filteredT.length}</strong> ${activeFilter} test${filteredT.length !== 1 ? 's' : ''} from this run</span>
-                <button class="filter-banner-clear" onclick="clearFilter()">✕ Show all</button>
+                <span class="filter-banner-label">${t('filter_banner_showing')} <strong>${filteredT.length}</strong> ${t('badge_' + (activeFilter === 'quarantine' ? 'quarantined' : activeFilter))} ${filteredT.length !== 1 ? t('filter_banner_tests') : t('filter_banner_test')} ${t('filter_banner_from_run')}</span>
+                <button class="filter-banner-clear" onclick="clearFilter()">${t('filter_show_all_btn')}</button>
               </div>` :
               notable.length > 0 ? `
               <div class="run-detail-toggle">
-                <span class="detail-label">Failed &amp; flaky (${notable.length})</span>
-                ${hasMore ? `<button class="show-all-btn" id="showall-${idx}" onclick="showAllTests(${idx})">show all ${allT.length} tests</button>` : ''}
+                <span class="detail-label">${t('run_failed_flaky', {n: notable.length})}</span>
+                ${hasMore ? `<button class="show-all-btn" id="showall-${idx}" onclick="showAllTests(${idx})">${t('run_show_all', {n: allT.length})}</button>` : ''}
               </div>` :
               `<div class="run-detail-toggle">
-                <span class="detail-label">All tests (${allT.length})</span>
+                <span class="detail-label">${t('run_all_tests', {n: allT.length})}</span>
               </div>`
             }
             <div id="tests-${idx}">
-              ${displayTests.length ? renderTestRows(displayTests, p75) : `<div style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:8px 0">No ${activeFilter === 'failed' ? 'test failed' : activeFilter + ' tests'} in this run.</div>`}
+              ${displayTests.length ? renderTestRows(displayTests, p75) : `<div style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:8px 0">${activeFilter === 'failed' ? t('run_no_test_failed') : t('run_no_filter_tests', {status: t('badge_' + (activeFilter === 'quarantine' ? 'quarantined' : activeFilter))})}</div>`}
             </div>
           </div>` : ''}
       </div>`;
@@ -3985,6 +4270,7 @@ function renderRunsList() {
 }
 
 function renderTestRows(tests, p75 = 0) {
+  const tr = t; // alias to avoid shadowing by map param `t` (test object)
   const isImagePath = p => /\.(png|jpg|jpeg|webp)$/i.test(p);
   return tests.map((t, i) => {
     const errId      = `tre-${i}-${Math.random().toString(36).slice(2,7)}`;
@@ -4005,9 +4291,9 @@ function renderTestRows(tests, p75 = 0) {
       <div class="test-row-body">
         <div class="test-row-title" style="display:flex;align-items:center;gap:6px">
           <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
-          ${t.quarantined ? `<span class="badge quarantine">quarantined</span>` : ''}
-          ${slow       ? `<span class="slow-badge">SLOW</span>`            : ''}
-          ${regressing ? `<span class="regressing-badge">REGRESSING</span>` : ''}
+          ${t.quarantined ? `<span class="badge quarantine">${tr('test_quarantined')}</span>` : ''}
+          ${slow       ? `<span class="slow-badge">${tr('test_slow')}</span>`            : ''}
+          ${regressing ? `<span class="regressing-badge">${tr('test_regressing')}</span>` : ''}
         </div>
         <div class="test-row-meta">
           <span>${esc(t.file)}</span>
@@ -4017,13 +4303,13 @@ function renderTestRows(tests, p75 = 0) {
         ${t.error ? `
           <button class="test-row-error-toggle" onclick="toggleRowError('${errId}')">
             <span class="test-row-error-icon" id="icon-${errId}">▶</span>
-            error
+            ${tr('test_error')}
           </button>
           <div class="test-row-error" id="${errId}">${esc(t.error)}</div>` : ''}
         ${(t.artifacts?.trace || shotKey) ? `
           <div class="artifact-links">
-            ${t.artifacts?.trace ? `<a href="${safePath(t.artifacts.trace)}" download class="artifact-link">↓ trace</a>` : ''}
-            ${shotKey ? `<button class="artifact-link screenshot-link" data-shot-key="${shotKey}" onclick="openLightboxKey(this.dataset.shotKey)">&#128247; screenshot</button>` : ''}
+            ${t.artifacts?.trace ? `<a href="${safePath(t.artifacts.trace)}" download class="artifact-link">${tr('artifact_trace')}</a>` : ''}
+            ${shotKey ? `<button class="artifact-link screenshot-link" data-shot-key="${shotKey}" onclick="openLightboxKey(this.dataset.shotKey)">${tr('artifact_screenshot')}</button>` : ''}
           </div>` : ''}
       </div>
     </div>`;
@@ -4075,6 +4361,49 @@ buttons.forEach(btn => {
 
 const saved = localStorage.getItem('theme');
 applyTheme(saved ?? 'system');
+
+// ── i18n ───────────────────────────────────────────────────────────────────
+function updateStaticElements() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+}
+
+function rerenderCurrentPage() {
+  const mc = document.getElementById('mainContent');
+  if (!mc) return;
+  if (currentPage === 'dashboard' || currentPage === 'search') {
+    render();
+  } else if (currentPage === 'trends') {
+    mc.innerHTML = '<div id="trendsPage"></div>';
+    renderTrendsPage();
+  } else if (currentPage === 'gallery') {
+    mc.innerHTML = '<div id="galleryPage"></div>';
+    renderGalleryPage();
+  } else if (currentPage === 'quarantine') {
+    mc.innerHTML = '<div id="quarantinePage"></div>';
+    renderQuarantinePage();
+  }
+  updateStaticElements();
+}
+
+function applyLocale(locale) {
+  currentLocale = locale;
+  localStorage.setItem('pw-reporter-locale', locale);
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === locale);
+  });
+  updateStaticElements();
+  if (runs.length) rerenderCurrentPage();
+}
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyLocale(btn.dataset.lang));
+});
+applyLocale(detectLocale());
 
 // ── Go ─────────────────────────────────────────────────────────────────────
 init();
