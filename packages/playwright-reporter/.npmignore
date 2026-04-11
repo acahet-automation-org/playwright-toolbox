@@ -16,3 +16,8 @@ biome.json
 # docs (keep README in the package)
 CHANGELOG.md
 CONTRIBUTING.md
+
+# dashboard source (only built index.html is shipped)
+dashboard/src/
+dashboard/build.mjs
+dashboard/config.template.js

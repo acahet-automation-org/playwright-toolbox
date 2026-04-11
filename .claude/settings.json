@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/andersoncahet/Documents/GitHub/playwright-toolbox status --short packages/playwright-reporter/src/)",
+      "Bash(git -C /Users/andersoncahet/Documents/GitHub/playwright-toolbox status --short packages/playwright-reporter/)",
+      "Bash(node dashboard/build.mjs)"
+    ]
+  }
+}

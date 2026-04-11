@@ -1,0 +1,49 @@
+  <!-- Guided tour overlay -->
+  <div class="tour-overlay" id="tourOverlay">
+    <div class="tour-backdrop" onclick="endTour()"></div>
+    <div class="tour-spotlight" id="tourSpotlight"></div>
+    <div class="tour-card" id="tourCard">
+      <div class="tour-card-step" id="tourStepLabel"></div>
+      <div class="tour-card-title" id="tourTitle"></div>
+      <div class="tour-card-body"  id="tourBody"></div>
+      <div class="tour-card-actions">
+        <button class="tour-skip" id="tourSkip" onclick="endTour()" data-i18n="tour_skip">Skip tour</button>
+        <button class="tour-btn ghost"   id="tourPrev" onclick="prevTourStep()" data-i18n="tour_back">← Back</button>
+        <button class="tour-btn primary" id="tourNext" onclick="nextTourStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden print report (populated by exportPDF(), visible only during print) -->
+  <div id="printReport"></div>
+
+  <div class="export-run-picker" id="exportRunPicker" onclick="closeExportRunPicker()">
+    <div class="erp-panel" onclick="event.stopPropagation()">
+      <div class="erp-header">
+        <span class="erp-title" id="erpTitle">Select run</span>
+        <button class="erp-close" onclick="closeExportRunPicker()">✕</button>
+      </div>
+      <div class="erp-list" id="erpList"></div>
+    </div>
+  </div>
+
+  <!-- Lightbox — click overlay to close, click img/title to stay open -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="event.stopPropagation();closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()">
+    <div class="lightbox-title" id="lightboxTitle" onclick="event.stopPropagation()"></div>
+  </div>
+
+  <!-- Main content -->
+  <main class="main" id="mainContent">
+    <div class="state-screen">
+      <div class="spinner"></div>
+      <p data-i18n="loading">Loading test history…</p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>created by <a href="https://github.com/acahet" target="_blank" rel="noopener">acahet</a></span>
+    <span id="footerProject"></span>
+  </footer>

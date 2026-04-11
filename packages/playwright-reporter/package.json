@@ -9,18 +9,21 @@
     "./reporter": "./dist/src/reporter.js"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "npm run build:dashboard && tsc --project tsconfig.json",
+    "build:dashboard": "node dashboard/build.mjs",
     "build:watch": "tsc --project tsconfig.json --watch",
+    "serve:dashboard": "npx serve dashboard",
     "prepublishOnly": "npm run build"
   },
   "files": [
     "dist/",
     "dashboard/"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "serve": "^14.2.6"
+  },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
-    "serve": "^14.2.6",
     "typescript": "^6.0.2"
   },
   "peerDependencies": {

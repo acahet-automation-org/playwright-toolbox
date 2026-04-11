@@ -1,0 +1,53 @@
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --surface2:  #1f2333;
+      --border:    #2a2f42;
+      --border2:   #363c54;
+      --text:      #e2e4ec;
+      --muted:     #7b82a0;
+      --accent:    #5b7cf6;
+      --accent2:   #7c9fff;
+
+      --pass:      #2dd4a0;
+      --pass-bg:   rgba(45,212,160,.12);
+      --fail:      #f25f5c;
+      --fail-bg:   rgba(242,95,92,.12);
+      --flaky:     #f5a623;
+      --flaky-bg:  rgba(245,166,35,.12);
+      --skip:           #7b82a0;
+      --skip-bg:        rgba(123,130,160,.12);
+      --quarantine:     #a78bfa;
+      --quarantine-bg:  rgba(167,139,250,.12);
+      --regression:     #f97316;
+      --regression-bg:  rgba(249,115,22,.12);
+
+      --radius:    8px;
+      --radius-lg: 12px;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    /* Light Theme Overrides */
+[data-theme="light"] {
+  --bg: #f8f9fc;
+  --surface: #ffffff;
+  --surface2: #f1f3f9;
+  --border: #dbe0eb;
+  --text: #1a1c23;
+  --muted: #646c8a;
+  --border2: #ccd2e3;
+}
+
+    /* System: follow OS when no explicit theme is forced */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    --bg: #f8f9fc;
+    --surface: #ffffff;
+    --surface2: #f1f3f9;
+    --border: #dbe0eb;
+    --text: #1a1c23;
+    --muted: #646c8a;
+    --border2: #ccd2e3;
+  }
+}
