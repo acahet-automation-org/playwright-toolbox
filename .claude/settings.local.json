@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git -C /Users/andersoncahet/Documents/GitHub/playwright-toolbox/packages/playwright-reporter diff --name-only src/reporter.ts)"
     ]
   }
 }

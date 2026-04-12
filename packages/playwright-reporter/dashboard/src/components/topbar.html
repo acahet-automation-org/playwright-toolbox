@@ -1,0 +1,60 @@
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <rect x="1" y="1" width="20" height="20" rx="5" stroke="#5b7cf6" stroke-width="1.5"/>
+        <path d="M6 11l3.5 3.5L16 7" stroke="#5b7cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span id="brandName">pw_dashboard</span>
+    </div>
+    <div class="topbar-meta" id="topbarMeta">loading…</div>
+    <div class="csv-btn-wrap" id="exportCsvWrap">
+      <button class="export-btn" id="exportCsvBtn" onclick="exportCSV('latest')">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span data-i18n="export_csv">Export CSV</span>
+      </button>
+      <button class="csv-chevron" id="csvChevron" onclick="toggleCsvDropdown(event)">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="csv-dropdown" id="csvDropdown">
+        <div class="csv-dropdown-item" onclick="exportCSV('latest');closeCsvDropdown()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="6" r="1.5" fill="currentColor"/></svg>
+          <span data-i18n="csv_latest">Latest run</span>
+        </div>
+        <div class="csv-dropdown-item" onclick="exportCSV('all');closeCsvDropdown()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M1 6h10M1 9h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <span data-i18n="csv_all">All runs</span>
+        </div>
+        <div class="csv-dropdown-item" onclick="openExportRunPicker('csv');closeCsvDropdown()" data-i18n="export_select_run">Select run…</div>
+      </div>
+    </div>
+    <div class="pdf-btn-wrap" id="exportPdfWrap">
+      <button class="export-btn" onclick="exportPDF()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7M3.5 5.5L6.5 8.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span data-i18n="export_pdf">Export PDF</span>
+      </button>
+      <button class="pdf-chevron" onclick="togglePdfDropdown(event)" aria-label="PDF export options">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="pdf-dropdown" id="pdfDropdown">
+        <div class="csv-dropdown-item" onclick="exportPDF(0);closePdfDropdown()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="6" r="1.5" fill="currentColor"/></svg>
+          <span data-i18n="csv_latest">Latest run</span>
+        </div>
+        <div class="csv-dropdown-item" onclick="openExportRunPicker('pdf');closePdfDropdown()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M1 6h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="9.5" cy="9.5" r="2" stroke="currentColor" stroke-width="1.1"/><path d="M9.5 8.5v1l.7.7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          <span data-i18n="export_select_run">Select run…</span>
+        </div>
+      </div>
+    </div>
+    <button class="tour-help-btn" onclick="startTour()" data-i18n-title="tour_help_title" title="Start guided tour">?</button>
+    <div class="lang-toggle" id="lang-toggle">
+  <button data-lang="en" class="lang-btn active">EN</button>
+  <button data-lang="it" class="lang-btn">IT</button>
+</div>
+    <div class="theme-toggle" id="theme-toggle">
+  <button data-theme="system" data-i18n="theme_system" class="theme-btn active">System</button>
+  <button data-theme="dark" data-i18n="theme_dark" class="theme-btn">Dark</button>
+  <button data-theme="light" data-i18n="theme_light" class="theme-btn">Light</button>
+</div>
+  </header>
