@@ -1,5 +1,11 @@
 # @acahet/playwright-reporter
 
+## 1.1.1
+
+### Patch Changes
+
+- 9b0f365: chore(deps): automated dependency update
+
 ## 1.1.0
 
 ### Minor Changes

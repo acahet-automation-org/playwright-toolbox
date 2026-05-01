@@ -1,6 +1,6 @@
 {
   "name": "@acahet/playwright-rules",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shared Playwright + TypeScript standards: ESLint rules, configs, base classes and fixtures",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -59,7 +59,7 @@
     "directory": "packages/playwright-rules"
   },
   "peerDependencies": {
-    "@acahet/playwright-configs": ">=0.1.0",
+    "@acahet/playwright-configs": ">=0.1.1",
     "@playwright/test": ">=1.40.0"
   },
   "peerDependenciesMeta": {
