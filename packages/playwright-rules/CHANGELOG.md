@@ -1,5 +1,17 @@
 # @acahet/playwright-rules
 
+## 1.0.1
+
+### Patch Changes
+
+- 9b0f365: chore(deps): automated dependency update
+- 292d893: chore(deps): automated dependency update
+- 60f4019: chore(deps): automated dependency update
+- Updated dependencies [9b0f365]
+- Updated dependencies [292d893]
+- Updated dependencies [60f4019]
+  - @acahet/playwright-configs@0.1.1
+
 ## 1.0.0
 
 ### Minor Changes
